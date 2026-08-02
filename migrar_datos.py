@@ -14,6 +14,7 @@ correcto no lo toca).
 from app import create_app
 from app.extensions import db
 from app.models import Plan
+from app.db_constraints import crear_restricciones_concurrencia
 
 app = create_app()
 
@@ -75,5 +76,14 @@ with app.app_context():
             print(f"  + plan creado: {nombre}")
     db.session.commit()
     print("Planes verificados: 4, 8, 12 y 16 clases por mes.")
+
+    # 4) Índice único parcial + triggers que anulan condiciones de
+    # carrera en la reserva de turnos (ver app/db_constraints.py). Si
+    # ya hay datos que violarían estas reglas (ej: alguien quedó
+    # reservado dos veces en la misma clase por un bug viejo), esto va
+    # a fallar con un error explícito en vez de crear la restricción a
+    # medias - hay que limpiar esos datos primero.
+    crear_restricciones_concurrencia(db.engine)
+    print("Restricciones de concurrencia (índice + triggers de cupo) verificadas/creadas.")
 
     print("Migración completa.")

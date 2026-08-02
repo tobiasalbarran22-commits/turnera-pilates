@@ -10,9 +10,11 @@ from calendar import monthrange
 from datetime import date, datetime, timedelta
 
 from flask import current_app
+from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
 from app.models import Horario, Clase, InscripcionFija, Reserva
+from app.utils import ahora_estudio, hoy_estudio
 
 
 def generar_clases_para_mes(anio, mes):
@@ -75,7 +77,7 @@ def generar_clases_para_mes(anio, mes):
     # un alumno entra a su calendario) y ahí sí se reservan los fijos
     # - sin importar si esas clases ya estaban generadas de antes o
     # se acaban de crear recién ahora (ver _reservar_fijos_del_mes).
-    hoy = date.today()
+    hoy = hoy_estudio()
     if anio == hoy.year and mes == hoy.month:
         _reservar_fijos_del_mes(primer_dia, ultimo_dia, horarios_activos)
 
@@ -96,7 +98,7 @@ def _reservar_fijos_del_mes(primer_dia, ultimo_dia, horarios_activos):
     ya pasó (ej: si hoy es 15 y el horario nunca se había generado
     antes, no tiene sentido reservar automáticamente los días 1 al 14).
     """
-    ahora = datetime.now()
+    ahora = ahora_estudio()
     horarios_por_id = {h.id: h for h in horarios_activos}
     clases_del_mes = (
         Clase.query.filter(
@@ -131,6 +133,20 @@ def _reservar_fijos_de_horario(clase, horario):
     siempre" - hay que respetar el tope mensual igual que a un alumno
     "libre". Si ya no le queda saldo de ningún tipo, se lo salta: ese
     lugar queda libre para otro alumno en vez de dárselo igual.
+
+    Cada intento de reserva va envuelto en su propio SAVEPOINT
+    (db.session.begin_nested()). Esta función corre dentro de un lote
+    más grande (ver _reservar_fijos_del_mes, que reserva a TODOS los
+    alumnos fijos de TODAS las clases del mes en una sola transacción
+    final). Si un alumno puntual choca contra el índice único parcial
+    o el trigger de cupo de app/db_constraints.py - por ejemplo,
+    alguien reservó ese mismo lugar a mano justo en este instante -,
+    sin el SAVEPOINT ese error tiraría abajo el commit de TODO el lote
+    (perdiendo también las reservas de los demás alumnos que sí
+    estaban bien). Con el SAVEPOINT, solo se deshace ese intento
+    puntual (incluido el crédito que ya le había descontado
+    consumir_clase, para que no pierda saldo por una reserva que nunca
+    se concretó) y se sigue con el resto de la lista.
     """
     inscripciones = InscripcionFija.query.filter_by(horario_id=horario.id, activo=True).all()
     for inscripcion in inscripciones:
@@ -148,15 +164,18 @@ def _reservar_fijos_de_horario(clase, horario):
         if clase.cupos_ocupados >= clase.cupo_maximo:
             break
         try:
-            es_recuperacion = usuario.consumir_clase()
+            with db.session.begin_nested():
+                es_recuperacion = usuario.consumir_clase()
+                db.session.add(Reserva(
+                    usuario_id=usuario.id,
+                    clase_id=clase.id,
+                    estado="reservada",
+                    es_recuperacion=es_recuperacion,
+                ))
         except ValueError:
             continue
-        db.session.add(Reserva(
-            usuario_id=usuario.id,
-            clase_id=clase.id,
-            estado="reservada",
-            es_recuperacion=es_recuperacion,
-        ))
+        except IntegrityError:
+            continue
 
 
 def dias_fijos_permitidos(usuario):
@@ -230,8 +249,8 @@ def asignar_horario_fijo(usuario, horario):
         inscripcion = InscripcionFija(usuario_id=usuario.id, horario_id=horario.id)
         db.session.add(inscripcion)
 
-    hoy = date.today()
-    ahora = datetime.now()
+    hoy = hoy_estudio()
+    ahora = ahora_estudio()
     fin_de_mes_actual = date(hoy.year, hoy.month, monthrange(hoy.year, hoy.month)[1])
     clases_del_mes = Clase.query.filter(
         Clase.horario_id == horario.id,
@@ -249,12 +268,25 @@ def asignar_horario_fijo(usuario, horario):
         ).first()
         if ya_reservada or not clase.tiene_cupo:
             continue
+        # Cada intento va en su propio SAVEPOINT: si choca contra el
+        # índice único parcial o el trigger de cupo de
+        # app/db_constraints.py (alguien reservó este mismo lugar a
+        # mano justo ahora), se deshace solo ESE intento -y el crédito
+        # que ya le había descontado consumir_clase()- en vez de tirar
+        # abajo el commit final con TODAS las clases de este alumno.
         try:
-            es_recuperacion = usuario.consumir_clase()
+            with db.session.begin_nested():
+                es_recuperacion = usuario.consumir_clase()
+                db.session.add(Reserva(
+                    usuario_id=usuario.id, clase_id=clase.id,
+                    estado="reservada", es_recuperacion=es_recuperacion,
+                ))
         except ValueError:
             saltadas_por_saldo += 1
             continue
-        db.session.add(Reserva(usuario_id=usuario.id, clase_id=clase.id, estado="reservada", es_recuperacion=es_recuperacion))
+        except IntegrityError:
+            saltadas_por_saldo += 1
+            continue
         reservadas += 1
 
     db.session.commit()
@@ -268,7 +300,7 @@ def quitar_horario_fijo(inscripcion):
     recuperación: fue una decisión del admin, no una cancelación del
     alumno con anticipación).
     """
-    hoy = date.today()
+    hoy = hoy_estudio()
     reservas_futuras = (
         Reserva.query.join(Clase)
         .filter(
@@ -281,7 +313,7 @@ def quitar_horario_fijo(inscripcion):
     )
     for reserva in reservas_futuras:
         reserva.estado = "cancelada"
-        reserva.fecha_cancelacion = datetime.utcnow()
+        reserva.fecha_cancelacion = ahora_estudio()
 
     db.session.delete(inscripcion)
     db.session.commit()

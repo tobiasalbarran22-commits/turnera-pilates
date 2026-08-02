@@ -15,12 +15,19 @@ Hace dos cosas:
 from app import create_app
 from app.extensions import db
 from app.models import Usuario, Plan
+from app.db_constraints import crear_restricciones_concurrencia
 
 app = create_app()
 
 with app.app_context():
     db.create_all()
     print("Tablas creadas correctamente.")
+
+    # db.create_all() solo crea las tablas que salen de los modelos de
+    # SQLAlchemy - el índice único parcial y los triggers que evitan
+    # sobreturnos por condiciones de carrera hay que crearlos aparte.
+    crear_restricciones_concurrencia(db.engine)
+    print("Restricciones de concurrencia (índice + triggers de cupo) verificadas/creadas.")
 
     # Evitamos crear un admin duplicado si el script se corre más de una vez
     email_admin = "admin@estudio.com"

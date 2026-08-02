@@ -3,6 +3,7 @@ from calendar import monthrange
 
 from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
+from sqlalchemy.exc import IntegrityError
 
 from app.alumno import bp
 from app.extensions import db
@@ -11,6 +12,7 @@ from app.admin.services import generar_clases_para_mes
 from app.alumno.services import reservar_clase, cancelar_reserva, notificar_cupo_liberado
 from app.integrations.google_calendar import crear_evento_para_reserva, eliminar_evento
 from app.integrations.email import enviar_confirmacion_reserva
+from app.utils import ahora_estudio, hoy_estudio
 
 
 @bp.route("/")
@@ -24,7 +26,7 @@ def dashboard():
 @bp.route("/calendario")
 @login_required
 def calendario():
-    hoy = date.today()
+    hoy = hoy_estudio()
 
     # Nos aseguramos de que las clases del mes ya estén generadas en
     # el calendario, por si el admin todavía no apretó el botón de
@@ -70,7 +72,7 @@ def horarios_del_dia(fecha_str):
     except ValueError:
         abort(404)
 
-    hoy = date.today()
+    hoy = hoy_estudio()
 
     # Regla del negocio: el alumno reserva "dentro del mismo mes".
     if fecha_dia.year != hoy.year or fecha_dia.month != hoy.month:
@@ -87,7 +89,7 @@ def horarios_del_dia(fecha_str):
     # Si el día es HOY, algunos horarios puntuales pueden ya haber
     # pasado aunque el día no haya terminado (ej: son las 15hs y hay
     # una clase de las 09hs). Calculamos esto por clase, no solo por día.
-    ahora = datetime.now()
+    ahora = ahora_estudio()
     horarios_pasados_ids = {
         c.id for c in clases_del_dia if datetime.combine(c.fecha, c.hora_inicio) <= ahora
     }
@@ -133,6 +135,21 @@ def reservar(clase_id):
     except ValueError as e:
         db.session.rollback()
         flash(str(e), "danger")
+    except IntegrityError as e:
+        # La reserva pasó los chequeos en Python (había cupo, no
+        # estaba ya reservada) pero la base de datos la rechazó igual:
+        # otro request (otro alumno reservando el último lugar, o el
+        # mismo alumno con doble clic) le ganó de carrera por una
+        # fracción de segundo. Esto es justamente lo que el índice
+        # único parcial y el trigger de cupo de app/db_constraints.py
+        # están para atajar - ver ese archivo para el detalle. Le
+        # mostramos al alumno el mismo mensaje que vería si hubiera
+        # llegado un poco más tarde, en vez de una pantalla de error.
+        db.session.rollback()
+        if "CUPO_LLENO" in str(e.orig):
+            flash("No quedan cupos disponibles para esta clase.", "danger")
+        else:
+            flash("Ya tenés un turno reservado para esta clase.", "danger")
     return redirect(url_for("alumno.horarios_del_dia", fecha_str=clase.fecha.isoformat()))
 
 
@@ -149,8 +166,8 @@ def mis_turnos():
     return render_template(
         "alumno/mis_turnos.html",
         reservas=reservas,
-        hoy=date.today(),
-        ahora=datetime.now(),
+        hoy=hoy_estudio(),
+        ahora=ahora_estudio(),
     )
 
 

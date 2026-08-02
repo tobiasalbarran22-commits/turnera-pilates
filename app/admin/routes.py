@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
@@ -10,6 +10,7 @@ from app.models import Usuario, Clase, Plan, Horario, InscripcionFija, Reserva, 
 from app.admin.forms import UsuarioForm, HorarioForm, DIAS_SEMANA
 from app.admin.services import generar_clases_para_mes, asignar_horario_fijo, quitar_horario_fijo
 from app.integrations.google_calendar import eliminar_evento
+from app.utils import hoy_estudio
 
 
 @bp.route("/")
@@ -17,7 +18,7 @@ from app.integrations.google_calendar import eliminar_evento
 @admin_required
 def dashboard():
     total_alumnos = Usuario.query.filter_by(rol="alumno", activo=True).count()
-    clases_hoy = Clase.query.filter_by(fecha=date.today()).count()
+    clases_hoy = Clase.query.filter_by(fecha=hoy_estudio()).count()
     return render_template("admin/dashboard.html", total_alumnos=total_alumnos, clases_hoy=clases_hoy)
 
 
@@ -348,7 +349,7 @@ def horarios():
         "admin/horarios_lista.html",
         por_dia=por_dia,
         dias_semana=DIAS_SEMANA,
-        hoy=date.today(),
+        hoy=hoy_estudio(),
     )
 
 
@@ -423,7 +424,7 @@ def generar_clases():
     concretas en el calendario para el mes indicado. Se puede correr
     varias veces sin problema: no duplica clases ya generadas.
     """
-    hoy = date.today()
+    hoy = hoy_estudio()
     anio = int(request.form.get("anio", hoy.year))
     mes = int(request.form.get("mes", hoy.month))
 
@@ -445,7 +446,7 @@ def generar_clases():
 @login_required
 @admin_required
 def clases():
-    hoy = date.today()
+    hoy = hoy_estudio()
     fecha_str = request.args.get("fecha")
     try:
         fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date() if fecha_str else hoy

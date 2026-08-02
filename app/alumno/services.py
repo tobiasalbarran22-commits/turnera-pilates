@@ -9,13 +9,15 @@ llama. Así, si algo falla a mitad de camino, no queda nada a medio
 guardar.
 """
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 from flask import current_app
+from sqlalchemy import update
 
 from app.extensions import db
-from app.models import Reserva, Clase, AvisoCupo
+from app.models import Reserva, Clase, AvisoCupo, Usuario
 from app.integrations.email import enviar_recordatorio_clase, enviar_aviso_cupo_liberado
+from app.utils import ahora_estudio, hoy_estudio
 
 
 def reservar_clase(usuario, clase):
@@ -30,7 +32,7 @@ def reservar_clase(usuario, clase):
     vencen a fin de mes, así que conviene gastarlas al final, no antes
     que las del plan.
     """
-    ahora = datetime.now()
+    ahora = ahora_estudio()
     inicio_clase = datetime.combine(clase.fecha, clase.hora_inicio)
 
     if inicio_clase <= ahora:
@@ -68,31 +70,59 @@ def cancelar_reserva(reserva, usuario):
     alumno una clase para recuperar dentro del mismo mes (con un
     tope de MAX_CLASES_RECUPERABLES, 3 por defecto). Si cancela más
     tarde (o directamente no aparece), pierde la clase sin crédito.
-    """
-    if reserva.estado != "reservada":
-        raise ValueError("Esta reserva ya estaba cancelada.")
 
+    OJO con la implementación: igual que en Usuario.consumir_clase(),
+    tanto el paso "reservada" -> "cancelada" como el acreditado de
+    clases_recuperables se hacen con un UPDATE ... WHERE atómico, no
+    con "leer el valor actual en Python y después guardarlo". Sin
+    esto, dos cancelaciones casi simultáneas de la MISMA reserva
+    (ej: doble clic, o la pestaña de "Mis turnos" abierta en dos
+    lugares) podrían pasar las dos el chequeo de "¿todavía está
+    reservada?" antes de que ninguna guarde, y acreditar el crédito de
+    recuperación DOS veces por una sola cancelación real. Con el
+    UPDATE ... WHERE estado='reservada', la base de datos serializa
+    esos dos requests: al segundo que se ejecute, el WHERE ya no
+    matchea (el estado ya cambió) y no actualiza nada - ahí es cuando
+    avisamos que "ya estaba cancelada" en vez de acreditar de más.
+    Lo mismo para clases_recuperables, si el alumno cancela dos
+    reservas DISTINTAS al mismo tiempo.
+    """
     clase = reserva.clase
 
     # Combinamos fecha + hora de la clase en un único datetime para
     # poder calcular cuántas horas faltan hasta que empiece.
     inicio_clase = datetime.combine(clase.fecha, clase.hora_inicio)
-    horas_de_anticipacion = (inicio_clase - datetime.now()).total_seconds() / 3600
+    horas_de_anticipacion = (inicio_clase - ahora_estudio()).total_seconds() / 3600
 
     minimo_horas = current_app.config["HORAS_MINIMAS_PARA_CANCELAR"]
     cancelacion_a_tiempo = horas_de_anticipacion >= minimo_horas
 
-    reserva.estado = "cancelada"
-    reserva.fecha_cancelacion = datetime.utcnow()
-    reserva.cancelacion_a_tiempo = cancelacion_a_tiempo
+    tabla_reserva = Reserva.__table__
+    resultado = db.session.execute(
+        update(tabla_reserva)
+        .where(tabla_reserva.c.id == reserva.id, tabla_reserva.c.estado == "reservada")
+        .values(
+            estado="cancelada",
+            fecha_cancelacion=ahora_estudio(),
+            cancelacion_a_tiempo=cancelacion_a_tiempo,
+        )
+    )
+    if not resultado.rowcount:
+        raise ValueError("Esta reserva ya estaba cancelada.")
+    db.session.expire(reserva, ["estado", "fecha_cancelacion", "cancelacion_a_tiempo"])
 
     if cancelacion_a_tiempo:
         tope = current_app.config["MAX_CLASES_RECUPERABLES"]
-        if usuario.clases_recuperables < tope:
-            usuario.clases_recuperables += 1
-        # Si ya está en el tope, no sumamos más - la clase se pierde
-        # igual, la anticipación con la que avisó no alcanza para
-        # "acumular" por encima del máximo permitido.
+        tabla_usuario = Usuario.__table__
+        db.session.execute(
+            update(tabla_usuario)
+            .where(tabla_usuario.c.id == usuario.id, tabla_usuario.c.clases_recuperables < tope)
+            .values(clases_recuperables=tabla_usuario.c.clases_recuperables + 1)
+        )
+        # Si ya está en el tope, el WHERE no matchea y no se suma más
+        # - la clase se pierde igual, la anticipación con la que avisó
+        # no alcanza para "acumular" por encima del máximo permitido.
+        db.session.expire(usuario, ["clases_recuperables"])
 
     return cancelacion_a_tiempo
 
@@ -112,7 +142,7 @@ def notificar_cupo_liberado(clase):
     for aviso in pendientes:
         if enviar_aviso_cupo_liberado(aviso):
             aviso.notificado = True
-            aviso.fecha_notificado = datetime.utcnow()
+            aviso.fecha_notificado = ahora_estudio()
 
 
 def enviar_recordatorios_del_dia_siguiente():
@@ -125,7 +155,7 @@ def enviar_recordatorios_del_dia_siguiente():
     Programador de tareas de Windows (o cron en Linux/Mac). El sistema
     NO lo hace solo: necesita que algo externo lo dispare una vez al día.
     """
-    manana = date.today() + timedelta(days=1)
+    manana = hoy_estudio() + timedelta(days=1)
 
     reservas = (
         Reserva.query.join(Clase)

@@ -23,9 +23,9 @@ Tablas:
   si se libera un lugar en una Clase que estaba llena.
 """
 
-from datetime import datetime
 from flask_login import UserMixin
 from app.extensions import db
+from app.utils import ahora_estudio
 
 
 class Usuario(UserMixin, db.Model):
@@ -73,7 +73,7 @@ class Usuario(UserMixin, db.Model):
     clases_recuperables = db.Column(db.Integer, default=0)
 
     activo = db.Column(db.Boolean, default=True)  # para "desactivar" en vez de borrar usuarios
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha_creacion = db.Column(db.DateTime, default=ahora_estudio)
 
     # Una vez que un alumno reserva turnos, acá quedan todas sus reservas
     reservas = db.relationship("Reserva", backref="usuario", lazy="dynamic")
@@ -98,13 +98,44 @@ class Usuario(UserMixin, db.Model):
         Devuelve True si se usó un crédito de recuperación, False si
         se usó el saldo normal. Lanza ValueError si no queda saldo de
         ningún tipo.
+
+        OJO con la implementación: hacemos el descuento con un UPDATE
+        directo con el "que quede saldo" adentro del WHERE (no
+        "leer self.clases_disponibles en Python, restar 1, guardar"),
+        para que el chequeo y el descuento sean UNA sola operación
+        atómica de la base de datos. Si hiciéramos "if self.x > 0:
+        self.x -= 1" y dos requests entraran casi al mismo tiempo con
+        el mismo alumno (ej: doble clic reservando dos clases
+        distintas), los dos podrían leer el mismo saldo=1 ANTES de que
+        ninguno guarde, y los dos terminarían gastando el mismo último
+        crédito. Con el UPDATE ... WHERE clases_disponibles > 0, la
+        propia base de datos serializa esos dos requests: al segundo
+        que se ejecute, el WHERE ya no matchea (el saldo ya está en 0)
+        y la fila no se actualiza - ahí es cuando probamos con
+        clases_recuperables, y si tampoco alcanza, recién ahí fallamos.
         """
-        if self.clases_disponibles > 0:
-            self.clases_disponibles -= 1
+        from sqlalchemy import update
+
+        tabla = Usuario.__table__
+
+        resultado = db.session.execute(
+            update(tabla)
+            .where(tabla.c.id == self.id, tabla.c.clases_disponibles > 0)
+            .values(clases_disponibles=tabla.c.clases_disponibles - 1)
+        )
+        if resultado.rowcount:
+            db.session.expire(self, ["clases_disponibles"])
             return False
-        elif self.clases_recuperables > 0:
-            self.clases_recuperables -= 1
+
+        resultado = db.session.execute(
+            update(tabla)
+            .where(tabla.c.id == self.id, tabla.c.clases_recuperables > 0)
+            .values(clases_recuperables=tabla.c.clases_recuperables - 1)
+        )
+        if resultado.rowcount:
+            db.session.expire(self, ["clases_recuperables"])
             return True
+
         raise ValueError("No te quedan clases disponibles ni clases para recuperar este mes.")
 
     @property
@@ -227,7 +258,7 @@ class Reserva(db.Model):
     estado = db.Column(db.String(20), nullable=False, default="reservada")
     es_recuperacion = db.Column(db.Boolean, default=False)
 
-    fecha_reserva = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha_reserva = db.Column(db.DateTime, default=ahora_estudio)
     fecha_cancelacion = db.Column(db.DateTime, nullable=True)
 
     # Si se canceló con >= HORAS_MINIMAS_PARA_CANCELAR de anticipación,
@@ -264,7 +295,7 @@ class InscripcionFija(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
     horario_id = db.Column(db.Integer, db.ForeignKey("horarios.id"), nullable=False)
     activo = db.Column(db.Boolean, default=True)
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha_creacion = db.Column(db.DateTime, default=ahora_estudio)
 
     usuario = db.relationship("Usuario", backref="inscripciones_fijas")
     horario = db.relationship("Horario", backref="inscripciones_fijas")
@@ -288,7 +319,7 @@ class AvisoCupo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
     clase_id = db.Column(db.Integer, db.ForeignKey("clases.id"), nullable=False)
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha_creacion = db.Column(db.DateTime, default=ahora_estudio)
     notificado = db.Column(db.Boolean, default=False)
     fecha_notificado = db.Column(db.DateTime, nullable=True)
 
