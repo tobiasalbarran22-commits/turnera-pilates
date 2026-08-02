@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Mis turnos{% endblock %}
+
+{% block content %}
+<span class="eyebrow" style="font-family:var(--f-mono); font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--sage); display:block; margin-bottom:.2rem;">← <a href="{{ url_for('alumno.calendario') }}" style="color:var(--sage);">Calendario</a></span>
+<h1>Mis turnos</h1>
+
+<div class="tarjeta">
+    {% if not reservas %}
+        <p style="color:var(--muted);">No tenés turnos reservados.</p>
+    {% endif %}
+    {% for r in reservas %}
+    <div class="horario-fila">
+        <div>
+            <span class="horario-hora">{{ r.clase.fecha.strftime('%d/%m') }} — {{ r.clase.hora_inicio.strftime('%H:%M') }}</span>
+            {% if r.es_recuperacion %}<span class="horario-cupo"> · recuperación</span>{% endif %}
+        </div>
+        <form method="POST" action="{{ url_for('alumno.cancelar', reserva_id=r.id) }}" onsubmit="return confirm('¿Cancelar este turno?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" style="background:none; border:1px solid var(--clay); color:var(--clay); margin:0; padding:.4rem 1rem; font-weight:500;">Cancelar</button>
+        </form>
+    </div>
+    {% endfor %}
+    <p class="leyenda">Cancelar con 4hs o más de anticipación acredita una clase para recuperar dentro del mismo mes.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+"""
+Script de inicialización. Se corre UNA sola vez (o cada vez que
+querramos resetear la base de datos desde cero) con:
+
+    python seed.py
+
+Hace dos cosas:
+1. Crea todas las tablas en la base de datos (a partir de los
+   modelos definidos en app/models.py).
+2. Crea un usuario administrador inicial, para poder entrar por
+   primera vez al sistema (si no, nadie podría loguearse nunca,
+   porque solo un admin puede crear usuarios).
+"""
+
+from app import create_app
+from app.extensions import db
+from app.models import Usuario, Plan
+
+app = create_app()
+
+with app.app_context():
+    db.create_all()
+    print("Tablas creadas correctamente.")
+
+    # Evitamos crear un admin duplicado si el script se corre más de una vez
+    email_admin = "admin@estudio.com"
+    if not Usuario.query.filter_by(email=email_admin).first():
+        admin = Usuario(
+            nombre="Admin",
+            apellido="Estudio",
+            email=email_admin,
+            rol="admin",
+        )
+        admin.set_password("cambiar123")  # ⚠️ cambiar esta contraseña apenas entres
+        db.session.add(admin)
+        print(f"Usuario admin creado -> email: {email_admin} / contraseña: cambiar123")
+    else:
+        print("El usuario admin ya existía, no se creó de nuevo.")
+
+    # Los 4 planes del estudio: 4, 8, 12 y 16 clases por mes.
+    if not Plan.query.first():
+        db.session.add_all([
+            Plan(nombre="4 clases por mes", clases_por_mes=4),
+            Plan(nombre="8 clases por mes", clases_por_mes=8),
+            Plan(nombre="12 clases por mes", clases_por_mes=12),
+            Plan(nombre="16 clases por mes", clases_por_mes=16),
+        ])
+        print("Planes creados: 4, 8, 12 y 16 clases por mes.")
+
+    db.session.commit()
+    print("Listo. Ya podés correr: python run.py")

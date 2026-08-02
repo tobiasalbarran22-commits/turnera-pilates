@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+instance/
+google-credentials.json
+.env
+.claude/

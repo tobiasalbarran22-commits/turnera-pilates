@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Panel Administrador{% endblock %}
+
+{% block content %}
+<span class="eyebrow" style="font-family:var(--f-mono); font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--sage); display:block; margin-bottom:.2rem;">Panel</span>
+<h1>Administración</h1>
+
+<div class="tarjeta fila-stats">
+    <div>
+        <div class="horario-cupo">Alumnos activos</div>
+        <div style="font-family:var(--f-mono); font-size:1.8rem; color:var(--sage-deep); font-weight:600;">{{ total_alumnos }}</div>
+    </div>
+    <div>
+        <div class="horario-cupo">Clases programadas hoy</div>
+        <div style="font-family:var(--f-mono); font-size:1.8rem; color:var(--sage-deep); font-weight:600;">{{ clases_hoy }}</div>
+    </div>
+</div>
+
+<div class="tarjeta fila-stats" style="gap:1rem;">
+    <a href="{{ url_for('admin.usuarios') }}" class="boton" style="margin:0;">Gestionar usuarios</a>
+    <a href="{{ url_for('admin.horarios') }}" class="boton" style="margin:0; background:var(--sage);">Gestionar horarios</a>
+    <a href="{{ url_for('admin.clases') }}" class="boton" style="margin:0; background:var(--clay);">Ver clases e inscriptos</a>
+</div>
+{% endblock %}

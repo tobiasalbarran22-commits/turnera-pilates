@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Usuarios{% endblock %}
+
+{% block content %}
+<h1>Usuarios</h1>
+
+<p>
+    <a href="{{ url_for('admin.dashboard') }}">← Volver al panel</a>
+</p>
+
+<div class="tarjeta">
+    <div class="fila" style="margin-bottom: 1rem;">
+        <div>
+            <a href="{{ url_for('admin.usuarios') }}" class="{{ 'activo-filtro' if not filtro_rol }}">Todos</a> |
+            <a href="{{ url_for('admin.usuarios', rol='alumno') }}">Alumnos</a> |
+            <a href="{{ url_for('admin.usuarios', rol='admin') }}">Administradores</a>
+        </div>
+        <a href="{{ url_for('admin.usuario_nuevo') }}" class="boton">+ Nuevo usuario</a>
+    </div>
+
+    <table style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="text-align:left; border-bottom: 2px solid var(--line-soft);">
+                <th style="padding:.5rem;">Nombre</th>
+                <th style="padding:.5rem;">Email</th>
+                <th style="padding:.5rem;">Rol</th>
+                <th style="padding:.5rem;">Modalidad</th>
+                <th style="padding:.5rem;">Plan</th>
+                <th style="padding:.5rem;">Clases disp.</th>
+                <th style="padding:.5rem;">Recuperables</th>
+                <th style="padding:.5rem;">Estado</th>
+                <th style="padding:.5rem;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr style="border-bottom: 1px solid var(--line-soft); {{ 'opacity:.5;' if not u.activo }}">
+                <td style="padding:.5rem;">{{ u.nombre_completo }}</td>
+                <td style="padding:.5rem;">{{ u.email }}</td>
+                <td style="padding:.5rem;">{{ "Admin" if u.es_admin else "Alumno" }}</td>
+                <td style="padding:.5rem;">{{ "Fijo" if u.es_fijo else "Libre" if not u.es_admin else "—" }}</td>
+                <td style="padding:.5rem;">{{ u.plan.nombre if u.plan else "—" }}</td>
+                <td style="padding:.5rem;">{{ u.clases_disponibles if not u.es_admin else "—" }}</td>
+                <td style="padding:.5rem;">{{ u.clases_recuperables if not u.es_admin else "—" }}</td>
+                <td style="padding:.5rem;">{{ "Activo" if u.activo else "De baja" }}</td>
+                <td style="padding:.5rem; white-space:nowrap;">
+                    <a href="{{ url_for('admin.usuario_editar', usuario_id=u.id) }}">Editar</a>
+
+                    {% if not u.es_admin %}
+                        <a href="{{ url_for('admin.usuario_horarios_fijos', usuario_id=u.id) }}" style="margin-left:.5rem;">Horarios fijos</a>
+                        {% if u.plan %}
+                        <form method="POST" action="{{ url_for('admin.usuario_restablecer_saldo', usuario_id=u.id) }}" style="display:inline;" onsubmit="return confirm('¿Restablecer el saldo de {{ u.nombre_completo }} a {{ u.plan.clases_por_mes }} clases?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" style="background:none;border:none;color:var(--sage-deep); cursor:pointer; padding:0; margin:0 0 0 .5rem; font:inherit;">Restablecer saldo</button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if u.id != current_user.id %}
+                        {% if u.activo %}
+                        <form method="POST" action="{{ url_for('admin.usuario_dar_de_baja', usuario_id=u.id) }}" style="display:inline;" onsubmit="return confirm('¿Dar de baja a {{ u.nombre_completo }}?');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" style="background:none;border:none;color:var(--clay); cursor:pointer; padding:0; margin:0 0 0 .5rem; font:inherit;">Dar de baja</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('admin.usuario_reactivar', usuario_id=u.id) }}" style="display:inline;"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" style="background:none;border:none;color:var(--sage-deep); cursor:pointer; padding:0; margin:0 0 0 .5rem; font:inherit;">Reactivar</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.usuario_eliminar', usuario_id=u.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar definitivamente a {{ u.nombre_completo }}? Esta acción no se puede deshacer.');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" style="background:none;border:none;color:var(--clay); cursor:pointer; padding:0; margin:0 0 0 .5rem; font:inherit;">Eliminar</button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9" style="padding:1rem; text-align:center;">No hay usuarios cargados.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

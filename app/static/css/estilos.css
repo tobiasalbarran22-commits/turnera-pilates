@@ -1,0 +1,323 @@
+/* ============================================================
+   SISTEMA DE DISEÑO — Benincasa Pilates
+   Concepto: la turnera como un "tablero de horarios" — precisión,
+   alineación, ritmo. Tipografía mono para horarios (como un panel
+   de salidas), serif editorial para títulos.
+
+   Paleta: negro y crema, sin excepción, salvo en un único lugar
+   deliberado — los mensajes de alerta (éxito/error/aviso) y los
+   estados de "sin cupo" / acciones destructivas, donde un acento de
+   color ayuda a que el ojo distinga de un vistazo lo que necesita
+   atención. Todo lo demás (navegación, botones, enlaces, cifras,
+   bordes de foco) se resuelve solo con negro, crema y sus tonos
+   intermedios.
+   ============================================================ */
+
+:root {
+    /* ---- Base: negro + crema ---- */
+    --ink:        #1B1912;   /* texto principal, botones, navbar */
+    --ink-soft:   #3D392B;   /* negro suavizado, hover de botones oscuros */
+    --stone:      #EFE6D2;   /* fondo general, crema cálido */
+    --paper:      #FBF7EE;   /* superficie de tarjetas, crema claro */
+    --line:       #D9CFB4;   /* líneas divisorias */
+    --line-soft:  #ECE4CF;
+    --muted:      #6E6754;   /* texto secundario */
+
+    /* ---- Acento neutro ("tinta suave") ----
+       Sigue siendo negro/crema: un tono intermedio para dar
+       jerarquía a eyebrows, breadcrumbs, cifras destacadas y
+       enlaces de acción neutra (editar, reactivar), sin salir de
+       la paleta. */
+    --sage:       #4A4636;
+    --sage-deep:  #2A281F;
+    --sage-tint:  #E9E1CB;
+
+    /* ---- Único acento de color: alertas y acciones destructivas ---- */
+    --clay:       #9C4A32;   /* error / eliminar / sin cupo */
+    --clay-tint:  #F3E3DC;
+    --ok:         #4B6B45;   /* éxito / info */
+    --ok-tint:    #E7ECDF;
+    --ok-deep:    #35492F;
+    --warn:       #B8863C;   /* advertencia */
+    --warn-tint:  #F5EBD8;
+    --warn-deep:  #6E5320;
+
+    /* Tipografía */
+    --f-display: 'Fraunces', Georgia, serif;
+    --f-body: 'Work Sans', -apple-system, "Segoe UI", sans-serif;
+    --f-mono: 'IBM Plex Mono', "SF Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: var(--f-body);
+    margin: 0;
+    background: var(--stone);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 .75rem 0;
+}
+h1 { font-size: 2rem; }
+
+a {
+    color: var(--sage-deep);
+    text-decoration: underline;
+    text-decoration-color: var(--line);
+    text-underline-offset: 3px;
+    transition: text-decoration-color .15s ease;
+}
+a:hover { text-decoration-color: currentColor; }
+
+/* ---------- Navbar ---------- */
+.navbar {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(251, 247, 238, .16);
+}
+.navbar .logo {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-family: var(--f-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+}
+.navbar .logo .marca-eyebrow {
+    display: block;
+    font-family: var(--f-mono);
+    font-size: .6rem;
+    letter-spacing: .18em;
+    color: rgba(251, 247, 238, .55);
+    text-transform: uppercase;
+    line-height: 1;
+}
+.navbar nav { display: flex; align-items: center; flex-wrap: wrap; gap: 1.25rem; }
+.navbar .usuario { font-family: var(--f-mono); font-size: .8rem; color: var(--stone); opacity: .75; }
+.navbar a {
+    color: var(--paper);
+    text-decoration: none;
+    font-size: .9rem;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    transition: border-color .15s ease;
+}
+.navbar a:hover { border-color: rgba(251, 247, 238, .6); }
+
+/* ---------- Layout ---------- */
+.contenedor { max-width: 920px; margin: 2.5rem auto; padding: 0 1.25rem; }
+
+/* Utilidades de fila flexible: se usan en vez de "display:flex" suelto
+   en las plantillas para que cualquier barra con texto + botón(es) se
+   acomode sola en pantallas angostas en vez de desbordar. */
+.fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.fila-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.5rem;
+}
+
+.tarjeta {
+    background: var(--paper);
+    border-radius: 4px;
+    padding: 1.75rem;
+    box-shadow: 0 1px 2px rgba(27,25,18,.08), 0 0 0 1px var(--line-soft);
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+}
+
+/* ---------- Alertas ---------- */
+.alerta {
+    padding: .8rem 1.1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: .92rem;
+    border-left: 3px solid transparent;
+}
+.alerta-danger  { background: var(--clay-tint); color: #6E2E1B; border-color: var(--clay); }
+.alerta-warning { background: var(--warn-tint); color: var(--warn-deep); border-color: var(--warn); }
+.alerta-info    { background: var(--ok-tint); color: var(--ok-deep); border-color: var(--ok); }
+.alerta-success { background: var(--ok-tint); color: var(--ok-deep); border-color: var(--ok); }
+
+/* ---------- Formularios ---------- */
+form label {
+    display: block;
+    margin-top: 1rem;
+    font-family: var(--f-mono);
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+}
+form input, form select {
+    width: 100%;
+    padding: .6rem .7rem;
+    margin-top: .35rem;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--paper);
+    font-family: var(--f-body);
+    font-size: 1rem;
+    color: var(--ink);
+}
+form input:focus, form select:focus {
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px var(--sage-tint);
+}
+form small { color: var(--clay); font-size: .8rem; }
+
+button, .boton {
+    display: inline-block;
+    margin-top: 1.4rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: .65rem 1.4rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--f-body);
+    font-weight: 600;
+    font-size: .92rem;
+    text-decoration: none;
+    transition: background .15s ease;
+}
+button:hover, .boton:hover { background: var(--ink-soft); }
+
+/* ---------- Tablas ---------- */
+table { width: 100%; border-collapse: collapse; }
+th {
+    text-align: left;
+    padding: .5rem;
+    font-family: var(--f-mono);
+    font-size: .68rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 2px solid var(--line);
+    white-space: nowrap;
+}
+td { padding: .6rem .5rem; border-bottom: 1px solid var(--line-soft); white-space: nowrap; }
+
+/* ---------- Panel de horarios (estética de tablero de salidas) ---------- */
+.horario-fila {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem;
+    padding: .9rem 0;
+    border-bottom: 1px solid var(--line-soft);
+}
+.horario-hora {
+    font-family: var(--f-mono);
+    font-size: 1.15rem;
+    font-weight: 500;
+    letter-spacing: -.01em;
+}
+.horario-cupo { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); }
+
+/* ---------- Calendario ---------- */
+.calendario-grilla {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+.calendario-header {
+    font-family: var(--f-mono);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    padding-bottom: .5rem;
+}
+.dia-celda {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-family: var(--f-mono);
+    text-decoration: none;
+    color: var(--ink);
+    font-size: .95rem;
+    transition: transform .1s ease;
+}
+.dia-celda small { font-size: .58rem; letter-spacing: .03em; margin-top: 2px; }
+.dia-pasado    { background: var(--line-soft); color: #B4AC94; }
+.dia-vacio     { background: var(--paper); color: #C7C0AA; border: 1px solid var(--line-soft); }
+.dia-sin-cupo  { background: var(--clay-tint); color: #8C4A34; }
+.dia-con-cupo  { background: var(--sage-tint); color: var(--sage-deep); font-weight: 600; }
+.dia-con-cupo:hover { transform: translateY(-2px); }
+.dia-hoy { box-shadow: inset 0 0 0 2px var(--ink); }
+
+.leyenda { color: var(--muted); font-size: .8rem; margin-top: 1rem; }
+.leyenda .punto { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
+
+/* ---------- Login (hero de entrada) ---------- */
+.pantalla-login {
+    min-height: calc(100vh - 90px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tarjeta-login {
+    max-width: 380px;
+    width: 100%;
+}
+.tarjeta-login .eyebrow {
+    font-family: var(--f-mono);
+    font-size: .7rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: .3rem;
+    display: block;
+}
+.tarjeta-login h1 { font-size: 1.6rem; margin-bottom: .3rem; }
+.tarjeta-login .sub { color: var(--muted); font-size: .9rem; margin-bottom: 1.5rem; }
+
+/* ---------- Marca (isotipo) ---------- */
+.marca-mark { flex-shrink: 0; }
+
+@media (max-width: 640px) {
+    .navbar { padding: .85rem 1.1rem; flex-wrap: wrap; gap: .5rem; }
+    .navbar nav { gap: .5rem 1rem; }
+    .contenedor { margin: 1.5rem auto; }
+    h1 { font-size: 1.6rem; }
+    .tarjeta { padding: 1.25rem; }
+    .calendario-header { font-size: .55rem; }
+    .dia-celda { font-size: .8rem; }
+}
+
+@media (max-width: 400px) {
+    .calendario-grilla { gap: 3px; }
+    .dia-celda { font-size: .72rem; }
+    h1 { font-size: 1.4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dia-con-cupo:hover { transform: none; }
+    * { transition: none !important; }
+}

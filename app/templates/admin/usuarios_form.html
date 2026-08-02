@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ "Nuevo usuario" if modo == "crear" else "Editar usuario" }}{% endblock %}
+
+{% block content %}
+<h1>{{ "Nuevo usuario" if modo == "crear" else "Editar usuario: " + usuario.nombre_completo }}</h1>
+
+<div class="tarjeta" style="max-width: 500px;">
+    <form method="POST" id="form-usuario">
+        {{ form.hidden_tag() }}
+
+        {{ form.nombre.label }}
+        {{ form.nombre() }}
+        {% for error in form.nombre.errors %}<small style="color:var(--clay);">{{ error }}</small>{% endfor %}
+
+        {{ form.apellido.label }}
+        {{ form.apellido() }}
+        {% for error in form.apellido.errors %}<small style="color:var(--clay);">{{ error }}</small>{% endfor %}
+
+        {{ form.email.label }}
+        {{ form.email() }}
+        {% for error in form.email.errors %}<small style="color:var(--clay);">{{ error }}</small>{% endfor %}
+
+        {{ form.password.label }}
+        {{ form.password(placeholder="Dejar vacío para no cambiarla" if modo == "editar" else "") }}
+        {% for error in form.password.errors %}<small style="color:var(--clay);">{{ error }}</small>{% endfor %}
+
+        {{ form.rol.label }}
+        {{ form.rol() }}
+
+        {{ form.modalidad.label }}
+        {{ form.modalidad() }}
+        <small>"Día y horario fijo" se asigna aparte, una vez guardado el usuario.</small>
+
+        {{ form.plan_id.label }}
+        {{ form.plan_id() }}
+        <small>Solo aplica si el rol es "Alumno".</small>
+
+        {{ form.clases_disponibles.label }}
+        {{ form.clases_disponibles() }}
+        {% for error in form.clases_disponibles.errors %}<small style="color:var(--clay);">{{ error }}</small>{% endfor %}
+
+        {{ form.submit(class="boton") }}
+        <a href="{{ url_for('admin.usuarios') }}" style="margin-left:1rem;">Cancelar</a>
+    </form>
+    {% if modo == "editar" and not usuario.es_admin %}
+    <p style="margin-top:1.5rem; border-top:1px solid var(--line-soft); padding-top:1rem;">
+        <a href="{{ url_for('admin.usuario_horarios_fijos', usuario_id=usuario.id) }}">Asignar día(s) y horario(s) fijos →</a>
+    </p>
+    {% endif %}
+</div>
+
+{% if modo == "editar" and cantidad_horarios_fijos > 0 %}
+<script>
+    // Si el admin le baja el plan (menos clases por mes que el actual)
+    // a un alumno que tiene horarios fijos asignados, esos horarios se
+    // le van a quitar (y sus turnos futuros por esos horarios, a
+    // cancelar) al guardar - ver admin/routes.py: usuario_editar. Antes
+    // de mandar el formulario, le avisamos al admin y le pedimos que
+    // confirme.
+    (function () {
+        var planesClases = {{ planes_clases|tojson }};
+        var clasesActuales = {{ plan_actual_clases }};
+        var cantidadHorariosFijos = {{ cantidad_horarios_fijos }};
+        var form = document.getElementById("form-usuario");
+        var selectPlan = form.querySelector('select[name="plan_id"]');
+
+        form.addEventListener("submit", function (evento) {
+            var planNuevoId = parseInt(selectPlan.value, 10);
+            var clasesNuevas = planesClases[planNuevoId] || 0;
+
+            if (planNuevoId !== {{ usuario.plan_id or 0 }} && clasesNuevas < clasesActuales) {
+                var confirmado = confirm(
+                    "Este usuario tiene " + cantidadHorariosFijos + " horario(s) fijo(s) asignado(s). " +
+                    "Al bajarlo a un plan con menos clases por mes, esos horarios fijos se van a eliminar " +
+                    "y se van a cancelar los turnos futuros que tenía por ellos.\n\n" +
+                    "Se recomienda avisarle al alumno/a para que vuelva a reservar sus clases dentro del " +
+                    "nuevo plan.\n\n¿Querés continuar de todos modos?"
+                );
+                if (!confirmado) {
+                    evento.preventDefault();
+                }
+            }
+        });
+    })();
+</script>
+{% endif %}
+{% endblock %}

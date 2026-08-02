@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Ingresar{% endblock %}
+
+{% block content %}
+<div class="pantalla-login">
+    <div class="tarjeta tarjeta-login">
+        <span class="eyebrow">Turnera · Benincasa Pilates</span>
+        <h1>Bienvenida/o</h1>
+        <p class="sub">Ingresá con tu cuenta para reservar o gestionar tus clases.</p>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            {{ form.email.label }}
+            {{ form.email(placeholder="tu@email.com") }}
+            {% for error in form.email.errors %}<small>{{ error }}</small>{% endfor %}
+
+            {{ form.password.label }}
+            {{ form.password() }}
+            {% for error in form.password.errors %}<small>{{ error }}</small>{% endfor %}
+
+            <label style="display:flex; align-items:center; gap:.4rem; margin-top:1rem; text-transform:none; font-family:var(--f-body); font-size:.85rem; color:var(--muted);">
+                {{ form.recordarme(style="width:auto; margin:0;") }} {{ form.recordarme.label.text }}
+            </label>
+
+            {{ form.submit(class="boton", style="width:100%;") }}
+        </form>
+    </div>
+</div>
+{% endblock %}

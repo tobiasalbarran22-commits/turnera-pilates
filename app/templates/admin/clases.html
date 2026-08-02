@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Clases del {{ fecha.strftime('%d/%m') }}{% endblock %}
+
+{% block content %}
+<span class="eyebrow" style="font-family:var(--f-mono); font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--sage); display:block; margin-bottom:.2rem;">← <a href="{{ url_for('admin.dashboard') }}" style="color:var(--sage);">Panel</a></span>
+<h1 style="text-transform:capitalize;">{{ fecha|dia_semana_es }} {{ fecha.strftime('%d/%m/%Y') }}</h1>
+
+<div class="tarjeta fila">
+    <a href="{{ url_for('admin.clases', fecha=dia_anterior.isoformat()) }}">← Día anterior</a>
+    <a href="{{ url_for('admin.clases') }}">Hoy</a>
+    <a href="{{ url_for('admin.clases', fecha=dia_siguiente.isoformat()) }}">Día siguiente →</a>
+</div>
+
+{% if not clases %}
+<div class="tarjeta"><p style="color:var(--muted); margin:0;">No hay clases programadas este día.</p></div>
+{% endif %}
+
+{% for c in clases %}
+<div class="tarjeta">
+    <div class="fila" style="margin-bottom:.75rem;">
+        <span class="horario-hora">{{ c.hora_inicio.strftime('%H:%M') }} hs</span>
+        <span class="horario-cupo">{{ c.cupos_ocupados }} / {{ c.cupo_maximo }} camillas ocupadas{{ " — CANCELADA" if c.cancelada else "" }}</span>
+    </div>
+
+    {% if not c.reservas_activas %}
+        <p style="color:var(--muted); margin:0;">Todavía nadie se anotó en esta clase.</p>
+    {% else %}
+        <table style="width:100%; border-collapse: collapse;">
+            <thead>
+                <tr style="text-align:left; border-bottom: 2px solid var(--line-soft);">
+                    <th style="padding:.4rem;">Alumna/o</th>
+                    <th style="padding:.4rem;">Modalidad</th>
+                    <th style="padding:.4rem;">Tipo de turno</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in c.reservas_activas %}
+                <tr style="border-bottom: 1px solid var(--line-soft);">
+                    <td style="padding:.4rem;">{{ r.usuario.nombre_completo }}</td>
+                    <td style="padding:.4rem;">{{ "Fijo" if r.usuario.es_fijo else "Libre" }}</td>
+                    <td style="padding:.4rem;">{{ "Recuperación" if r.es_recuperacion else "Normal" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

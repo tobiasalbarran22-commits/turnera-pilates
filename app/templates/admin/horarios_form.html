@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Nuevo horario{% endblock %}
+
+{% block content %}
+<h1>Nuevo horario</h1>
+<div class="tarjeta" style="max-width: 400px;">
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        {{ form.dia_semana.label }}
+        {{ form.dia_semana() }}
+
+        {{ form.hora.label }}
+        {{ form.hora() }}
+        {% for error in form.hora.errors %}<small style="color:var(--clay);">{{ error }}</small>{% endfor %}
+
+        {{ form.submit(class="boton") }}
+        <a href="{{ url_for('admin.horarios') }}" style="margin-left:1rem;">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Horarios fijos de {{ usuario.nombre_completo }}{% endblock %}
+
+{% block content %}
+<span class="eyebrow" style="font-family:var(--f-mono); font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--sage); display:block; margin-bottom:.2rem;">← <a href="{{ url_for('admin.usuarios') }}" style="color:var(--sage);">Usuarios</a></span>
+<h1>Horarios fijos: {{ usuario.nombre_completo }}</h1>
+
+<div class="tarjeta">
+    <p>
+        Estos son los días y horarios en los que <strong>{{ usuario.nombre_completo }}</strong> queda
+        reservada/o automáticamente todas las semanas. Modalidad actual:
+        <strong>{{ "Día y horario fijo" if usuario.es_fijo else "Clases libres" }}</strong>.
+        {% if not usuario.es_fijo %}
+        <br><small style="color:var(--clay);">Ojo: este usuario está en modalidad "Clases libres". Podés asignarle
+        igual un horario fijo, pero para que tenga sentido conviene cambiar su modalidad a "Día y horario fijo"
+        desde <a href="{{ url_for('admin.usuario_editar', usuario_id=usuario.id) }}">editar usuario</a>.</small>
+        {% endif %}
+    </p>
+
+    {% for dia_num, nombre_dia in dias_semana %}
+        {% set horarios_del_dia = horarios_activos | selectattr("dia_semana", "equalto", dia_num) | list %}
+        {% if horarios_del_dia %}
+        <div style="margin-bottom: 1rem;">
+            <h3 style="margin-bottom:.3rem; border-bottom: 1px solid var(--line-soft); padding-bottom:.3rem;">{{ nombre_dia }}</h3>
+            {% for h in horarios_del_dia %}
+            <div class="horario-fila">
+                <span class="horario-hora">{{ h.hora.strftime('%H:%M') }} hs</span>
+                {% if h.id in asignados_ids %}
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="horario_id" value="{{ h.id }}">
+                        <input type="hidden" name="accion" value="quitar">
+                        <button type="submit" style="background:none; border:1px solid var(--clay); color:var(--clay); margin:0; padding:.4rem 1rem; font-weight:500;">Quitar de fijo</button>
+                    </form>
+                {% else %}
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="horario_id" value="{{ h.id }}">
+                        <input type="hidden" name="accion" value="asignar">
+                        <button type="submit" class="boton" style="margin:0;">Asignar fijo</button>
+                    </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endblock %}

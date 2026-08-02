@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Turnera{% endblock %} · Benincasa Pilates</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <a href="{{ url_for('index') }}" class="logo" style="text-decoration:none;">
+            <!-- Isotipo: dos arcos concéntricos desalineados que se
+                 centran uno sobre otro — la idea de "alineación" que
+                 es el corazón del método pilates (y de un buen
+                 sistema de turnos: todo cae en su lugar). -->
+            <svg class="marca-mark" width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="13" cy="15" r="10" stroke="#B3A98C" stroke-width="2"/>
+                <circle cx="17" cy="15" r="10" stroke="#FBF7EE" stroke-width="2"/>
+                <line x1="15" y1="4" x2="15" y2="26" stroke="#FBF7EE" stroke-width="1" stroke-dasharray="1.5 2.5"/>
+            </svg>
+            <span>
+                <span class="marca-eyebrow">Pilates</span>
+                Benincasa
+            </span>
+        </a>
+        {% if current_user.is_authenticated %}
+            <nav>
+                {% if not current_user.es_admin %}
+                    <a href="{{ url_for('alumno.calendario') }}">Calendario</a>
+                    <a href="{{ url_for('alumno.mis_turnos') }}">Mis turnos</a>
+                {% else %}
+                    <a href="{{ url_for('admin.usuarios') }}">Usuarios</a>
+                    <a href="{{ url_for('admin.horarios') }}">Horarios</a>
+                    <a href="{{ url_for('admin.clases') }}">Clases</a>
+                {% endif %}
+                <span class="usuario">{{ current_user.nombre }}</span>
+                <a href="{{ url_for('auth.cambiar_password') }}">Mi contraseña</a>
+                <a href="{{ url_for('auth.logout') }}">Salir</a>
+            </nav>
+        {% endif %}
+    </header>
+
+    <main class="contenedor">
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% if mensajes %}
+                {% for categoria, mensaje in mensajes %}
+                    <div class="alerta alerta-{{ categoria }}">{{ mensaje }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

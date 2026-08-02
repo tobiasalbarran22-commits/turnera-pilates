@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Mi calendario{% endblock %}
+
+{% block content %}
+<span class="eyebrow" style="font-family:var(--f-mono); font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--sage); display:block; margin-bottom:.2rem;">Calendario · {{ hoy.year }}</span>
+<h1 style="text-transform:capitalize;">{{ hoy|mes_es }}</h1>
+
+<div class="tarjeta fila-stats">
+    <div>
+        <div class="horario-cupo">Clases disponibles</div>
+        <div style="font-family:var(--f-mono); font-size:1.8rem; color:var(--sage-deep); font-weight:600;">{{ clases_disponibles }}</div>
+    </div>
+    <div>
+        <div class="horario-cupo">Para recuperar</div>
+        <div style="font-family:var(--f-mono); font-size:1.8rem; color:var(--clay); font-weight:600;">{{ clases_recuperables }}</div>
+    </div>
+</div>
+
+<div class="tarjeta">
+    <div class="calendario-grilla" style="margin-bottom:.5rem;">
+        <div class="calendario-header">Lun</div><div class="calendario-header">Mar</div>
+        <div class="calendario-header">Mié</div><div class="calendario-header">Jue</div>
+        <div class="calendario-header">Vie</div><div class="calendario-header">Sáb</div>
+        <div class="calendario-header">Dom</div>
+    </div>
+    <div class="calendario-grilla">
+        {% for _ in espacios_vacios %}<div></div>{% endfor %}
+        {% for d in dias %}
+            {% if d.es_pasado %}
+            <div class="dia-celda dia-pasado">{{ d.numero }}</div>
+            {% elif d.tiene_clases and d.clases_con_cupo > 0 %}
+            <a href="{{ url_for('alumno.horarios_del_dia', fecha_str=d.fecha.isoformat()) }}"
+               class="dia-celda dia-con-cupo {{ 'dia-hoy' if d.es_hoy }}">
+                {{ d.numero }}<small>{{ d.clases_con_cupo }} turno{{ 's' if d.clases_con_cupo != 1 else '' }}</small>
+            </a>
+            {% elif d.tiene_clases %}
+            <div class="dia-celda dia-sin-cupo {{ 'dia-hoy' if d.es_hoy }}">{{ d.numero }}<small>sin cupo</small></div>
+            {% else %}
+            <div class="dia-celda dia-vacio {{ 'dia-hoy' if d.es_hoy }}">{{ d.numero }}</div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <p class="leyenda">
+        <span class="punto" style="background:var(--sage);"></span>Con turnos &nbsp;&nbsp;
+        <span class="punto" style="background:var(--clay);"></span>Sin cupo &nbsp;&nbsp;
+        <span class="punto" style="background:var(--line);"></span>Sin clases
+    </p>
+</div>
+{% endblock %}

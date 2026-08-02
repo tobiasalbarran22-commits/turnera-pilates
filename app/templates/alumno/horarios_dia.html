@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Horarios del {{ fecha.strftime('%d/%m') }}{% endblock %}
+
+{% block content %}
+<span class="eyebrow" style="font-family:var(--f-mono); font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--sage); display:block; margin-bottom:.2rem;">← <a href="{{ url_for('alumno.calendario') }}" style="color:var(--sage);">Calendario</a></span>
+<h1 style="text-transform:capitalize;">{{ fecha|dia_semana_es }} {{ fecha.strftime('%d/%m') }}</h1>
+
+<div class="tarjeta">
+    {% if not clases %}
+        <p style="color:var(--muted);">No hay clases programadas este día.</p>
+    {% endif %}
+    {% for c in clases %}
+    <div class="horario-fila">
+        <div>
+            <span class="horario-hora">{{ c.hora_inicio.strftime('%H:%M') }}</span>
+            <span class="horario-cupo">&nbsp;&nbsp;{{ c.cupos_disponibles }} / {{ c.cupo_maximo }} lugares</span>
+        </div>
+        <div>
+            {% if c.id in mis_reservas_ids %}
+                <span style="color:var(--sage-deep); font-family:var(--f-mono); font-size:.85rem;">✓ RESERVADO</span>
+            {% elif not c.tiene_cupo %}
+                <span style="color:var(--clay); font-family:var(--f-mono); font-size:.85rem; margin-right:.6rem;">SIN CUPO</span>
+                {% if c.id in mis_avisos_ids %}
+                    <form method="POST" action="{{ url_for('alumno.aviso_cupo_cancelar', clase_id=c.id) }}" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" style="background:none; border:1px solid var(--sage); color:var(--sage-deep); margin:0; padding:.4rem 1rem; font-weight:500;" title="Cancelar aviso">🔔 Te vamos a avisar</button>
+                    </form>
+                {% else %}
+                    <form method="POST" action="{{ url_for('alumno.aviso_cupo_crear', clase_id=c.id) }}" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" style="background:none; border:1px solid var(--line); color:var(--ink); margin:0; padding:.4rem 1rem; font-weight:500;" title="Avisarme si se libera un lugar">🔔 Avisarme</button>
+                    </form>
+                {% endif %}
+            {% elif c.id in horarios_pasados_ids %}
+                <span style="color:var(--muted); font-family:var(--f-mono); font-size:.85rem;">PASADO</span>
+            {% else %}
+                <form method="POST" action="{{ url_for('alumno.reservar', clase_id=c.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="boton" style="margin:0;">Reservar</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
