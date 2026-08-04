@@ -65,6 +65,7 @@ body.landing {
     font-size: 1.1rem;
     font-weight: 600;
     text-decoration: none;
+    color: inherit; /* pisa el "a { color: var(--sage-deep) }" global: ahora que el logo es un link a home, tiene que seguir viéndose blanco/crema sobre el fondo oscuro */
 }
 .landing-topbar .logo .marca-eyebrow {
     display: block;
@@ -527,6 +528,49 @@ body.landing {
     letter-spacing: .04em;
     color: var(--muted);
     text-transform: uppercase;
+}
+
+/* ---------- Preguntas frecuentes ---------- */
+.landing-faq {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+}
+.landing-faq-item {
+    background: var(--paper);
+    border-radius: 4px;
+    padding: 1.1rem 1.4rem;
+    box-shadow: 0 1px 2px rgba(27, 25, 18, .08), 0 0 0 1px var(--line-soft);
+}
+.landing-faq-item summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 1.02rem;
+    color: var(--ink);
+}
+.landing-faq-item summary::-webkit-details-marker { display: none; }
+.landing-faq-item summary::after {
+    content: "+";
+    flex-shrink: 0;
+    font-family: var(--f-mono);
+    font-size: 1.2rem;
+    color: var(--sage);
+    transition: transform .15s ease;
+}
+.landing-faq-item[open] summary::after { transform: rotate(45deg); }
+.landing-faq-item p {
+    margin: .9rem 0 0;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    font-size: .96rem;
 }
 
 /* ---------- Botón flotante ("Tomar un turno") ----------

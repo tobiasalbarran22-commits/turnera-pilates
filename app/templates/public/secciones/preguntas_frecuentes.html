@@ -1,0 +1,16 @@
+<section class="landing-seccion claro" id="preguntas">
+    <div class="envoltura">
+        <div class="cabecera reveal">
+            <span class="eyebrow">Preguntas frecuentes</span>
+            <h2>Antes de tu primera clase</h2>
+        </div>
+        <div class="landing-faq">
+            {% for item in preguntas %}
+            <details class="landing-faq-item reveal" style="--delay:{{ loop.index0 * 0.06 }}s">
+                <summary>{{ item.pregunta }}</summary>
+                <p>{{ item.respuesta }}</p>
+            </details>
+            {% endfor %}
+        </div>
+    </div>
+</section>

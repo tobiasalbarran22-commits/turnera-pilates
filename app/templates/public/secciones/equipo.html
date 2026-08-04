@@ -1,0 +1,17 @@
+<section class="landing-seccion papel" id="equipo">
+    <div class="envoltura">
+        <div class="cabecera reveal">
+            <h2>¿Quiénes te reciben?</h2>
+            <p>Un equipo chico, para conocerte de verdad, clase a clase.</p>
+        </div>
+        <div class="landing-equipo">
+            {% for persona in equipo %}
+            <div class="landing-profe reveal" style="--delay:{{ loop.index0 * 0.12 }}s">
+                <div class="avatar">{{ persona.inicial }}</div>
+                <h3>{{ persona.nombre }}</h3>
+                <span class="rol">{{ persona.rol }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>

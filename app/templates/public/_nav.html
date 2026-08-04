@@ -1,0 +1,32 @@
+{# Nav compartido por todas las páginas públicas. Los links de acá abajo
+   apuntan a anclas DENTRO de la landing (#quienes-somos, etc.) porque hoy
+   es la única página pública que existe. El día que haya una segunda
+   página real (ej. /nosotros) y el nav tenga que funcionar visitándola
+   desde ahí, esos href pasan a necesitar la ruta completa
+   (url_for('public.index') + '#quienes-somos') en vez de solo el ancla. #}
+<header class="landing-topbar">
+    <div class="envoltura">
+        <a href="{{ url_for('public.index') }}" class="logo" style="text-decoration:none;">
+            <svg width="26" height="26" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="13" cy="15" r="10" stroke="#B3A98C" stroke-width="2"/>
+                <circle cx="17" cy="15" r="10" stroke="#FBF7EE" stroke-width="2"/>
+                <line x1="15" y1="4" x2="15" y2="26" stroke="#FBF7EE" stroke-width="1" stroke-dasharray="1.5 2.5"/>
+            </svg>
+            <span>
+                <span class="marca-eyebrow">Pilates</span>
+                Benincasa
+            </span>
+        </a>
+        <button type="button" class="landing-nav-toggle" id="landing-nav-toggle" aria-expanded="false" aria-controls="landing-nav" aria-label="Abrir menú">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <nav class="landing-nav" id="landing-nav">
+            <a href="#filosofia">Nuestra esencia</a>
+            <a href="#quienes-somos">Quiénes somos</a>
+            <a href="#por-que">Por qué elegirnos</a>
+            <a href="#equipo">El equipo</a>
+            <a href="#preguntas">Preguntas</a>
+            <a href="#ubicacion">Ubicación</a>
+        </nav>
+    </div>
+</header>

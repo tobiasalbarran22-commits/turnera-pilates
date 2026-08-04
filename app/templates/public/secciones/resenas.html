@@ -1,0 +1,21 @@
+<section class="landing-seccion papel">
+    <div class="envoltura">
+        <div class="cabecera reveal">
+            <span class="eyebrow">Reseñas</span>
+            <h2>Lo que dicen de nosotras/os</h2>
+            <p class="landing-estrellas">★★★★★ <span>{{ "%.1f"|format(calificacion_promedio) }} en Google Maps</span></p>
+        </div>
+        <div class="landing-resenas">
+            {% for resena in resenas %}
+            <div class="landing-resena reveal" style="--delay:{{ loop.index0 * 0.08 }}s">
+                <p class="landing-estrellas">★★★★★</p>
+                <p class="texto">"{{ resena.texto }}"</p>
+                <span class="autor">{{ resena.autor }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="fila-botones" style="justify-content:center; margin-top:2rem;">
+            <a href="{{ mapa_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-secundario-claro">Ver todas las reseñas en Google Maps</a>
+        </div>
+    </div>
+</section>

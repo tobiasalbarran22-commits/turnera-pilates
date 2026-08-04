@@ -55,10 +55,15 @@ def create_app(config_name=None):
     from app.auth import bp as auth_bp
     from app.admin import bp as admin_bp
     from app.alumno import bp as alumno_bp
+    from app.public import bp as public_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(alumno_bp)
+    # public: landing (/), robots.txt, sitemap.xml y, a futuro,
+    # cualquier otra página sin login (/nosotros, /contacto, etc.) -
+    # ver app/public/routes.py para cómo agregar una nueva.
+    app.register_blueprint(public_bp)
 
     @app.after_request
     def _sin_cache_en_paginas_dinamicas(response):
@@ -68,97 +73,19 @@ def create_app(config_name=None):
         # una página HTML) puede mostrar una versión vieja guardada en
         # vez de pedirle al servidor los datos actuales - se ve como
         # "no se actualiza en tiempo real" aunque el dato en la base
-        # ya esté bien. Los archivos estáticos (CSS/JS/imágenes) sí
-        # queremos que se cacheen, así que los dejamos afuera.
+        # ya esté bien.
+        #
+        # Ojo: esto tiene que aplicar SOLO a las páginas con sesión
+        # (admin/alumno/auth), no a las públicas (landing, robots.txt,
+        # sitemap.xml) ni a los archivos estáticos. La landing es una
+        # página de marketing que no cambia por request - dejar que el
+        # navegador la cachee normalmente es bueno para SEO (velocidad
+        # de carga en visitas repetidas es una señal de ranking), y
+        # bloquear el caché de robots.txt/sitemap.xml no tiene ningún
+        # sentido para un buscador.
         from flask import request
-        if not request.path.startswith("/static/"):
+        if request.blueprint in ("admin", "alumno", "auth"):
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         return response
-
-    def _renderizar_landing():
-        from urllib.parse import quote
-        from flask import render_template, current_app, url_for
-
-        mensaje_whatsapp = quote("¡Hola! Quiero consultar por las clases de pilates.")
-        whatsapp_numero = current_app.config["WHATSAPP_NUMERO"]
-        whatsapp_url = f"https://wa.me/{whatsapp_numero}?text={mensaje_whatsapp}"
-
-        direccion = current_app.config["DIRECCION_ESTUDIO"]
-        consulta_mapa = quote(f"Benincasa Pilates, {direccion}")
-        # Embed sin API key (el "output=embed" clásico de Google Maps,
-        # gratis y sin necesidad de una cuenta de Google Cloud) para el
-        # iframe, y un link normal de búsqueda para "Cómo llegar" /
-        # "Ver en Google Maps".
-        mapa_embed_url = f"https://www.google.com/maps?q={consulta_mapa}&output=embed"
-        mapa_url = f"https://www.google.com/maps/search/?api=1&query={consulta_mapa}"
-
-        return render_template(
-            "landing.html",
-            whatsapp_url=whatsapp_url,
-            whatsapp_numero=whatsapp_numero,
-            instagram_url=current_app.config["INSTAGRAM_URL"],
-            direccion=direccion,
-            mapa_embed_url=mapa_embed_url,
-            mapa_url=mapa_url,
-            # _external=True arma la URL completa (con dominio) en vez de
-            # una ruta relativa - las etiquetas SEO (canonical, Open
-            # Graph, JSON-LD) tienen que llevar la URL completa. Al
-            # calcularla con url_for en vez de escribirla a mano, se
-            # arma sola con el dominio real donde esté corriendo la app
-            # en cada momento (localhost en desarrollo, el dominio real
-            # una vez publicada), sin tener que hardcodear ninguno.
-            canonical_url=url_for("index", _external=True),
-            og_image_url=url_for("static", filename="img/estudio-interior.jpg", _external=True),
-        )
-
-    # Ruta raíz: siempre muestra la landing pública, sin excepción -
-    # así es como quien entra al sitio (link de Instagram, WhatsApp,
-    # buscador, etc.) siempre cae primero en la página de presentación
-    # del estudio. La única excepción es alguien que YA tiene una
-    # sesión iniciada: a esa persona la mandamos directo a su panel,
-    # no tendría sentido mostrarle la landing de nuevo cada vez que
-    # entra a la app estando logueada.
-    @app.route("/")
-    def index():
-        from flask import redirect, url_for
-        from flask_login import current_user
-
-        if current_user.is_authenticated:
-            return redirect(url_for("auth.redirigir_segun_rol"))
-        return _renderizar_landing()
-
-    # robots.txt y sitemap.xml: le dicen a Google qué puede rastrear e
-    # indexar (la landing) y qué NO (todo lo que requiere login - no
-    # tiene sentido para un buscador, y así tampoco aparece por error
-    # en resultados de búsqueda). Se arman con url_for para que las
-    # URLs sean siempre las reales, sin hardcodear un dominio.
-    @app.route("/robots.txt")
-    def robots_txt():
-        from flask import Response, url_for
-        contenido = (
-            "User-agent: *\n"
-            "Allow: /\n"
-            "Disallow: /admin/\n"
-            "Disallow: /alumno/\n"
-            "Disallow: /login\n"
-            "Disallow: /cambiar-password\n"
-            f"\nSitemap: {url_for('sitemap_xml', _external=True)}\n"
-        )
-        return Response(contenido, mimetype="text/plain")
-
-    @app.route("/sitemap.xml")
-    def sitemap_xml():
-        from flask import Response, url_for
-        contenido = (
-            '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-            "  <url>\n"
-            f"    <loc>{url_for('index', _external=True)}</loc>\n"
-            "    <changefreq>monthly</changefreq>\n"
-            "    <priority>1.0</priority>\n"
-            "  </url>\n"
-            "</urlset>\n"
-        )
-        return Response(contenido, mimetype="application/xml")
 
     return app

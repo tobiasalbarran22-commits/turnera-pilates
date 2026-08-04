@@ -1,0 +1,17 @@
+<section class="landing-seccion oscuro landing-contacto">
+    <div class="envoltura">
+        <div class="cabecera reveal">
+            <h2>¿Lista/o para tu primera clase?</h2>
+            <p>Contanos qué buscás y te ayudamos a encontrar tu horario ideal.</p>
+        </div>
+        <div class="fila-botones reveal" style="--delay:.1s">
+            <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-primario">
+                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 20l1.2-3.6A8 8 0 1 1 8.6 19L4 20z"/><path d="M8.5 10.5c.3 1.8 2.2 3.7 4 4"/></svg>WhatsApp
+            </a>
+            <a href="{{ instagram_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-secundario">
+                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r=".6" fill="currentColor" stroke="none"/></svg>Instagram
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="boton-cta boton-cta-secundario">Tomar un turno</a>
+        </div>
+    </div>
+</section>

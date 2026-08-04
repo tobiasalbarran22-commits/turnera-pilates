@@ -1,0 +1,23 @@
+{% extends "public/base_publica.html" %}
+
+{# La landing es la página de inicio, así que reutiliza el título/
+   descripción/keywords por default que ya trae base_publica.html (son
+   justo los del estudio en general). Una página nueva que NO sea la
+   home sí va a necesitar pisar estos bloques con su propio contenido -
+   por ejemplo:
+       {% block seo_title %}Nosotros | Benincasa Pilates{% endblock %}
+   Este archivo es, a propósito, solo la lista de secciones que
+   componen ESTA página: agregar/quitar/reordenar una sección acá es
+   una línea, no hay que tocar el <head> ni el nav ni el footer. #}
+
+{% block contenido %}
+    {% include "public/secciones/hero.html" %}
+    {% include "public/secciones/filosofia.html" %}
+    {% include "public/secciones/quienes_somos.html" %}
+    {% include "public/secciones/por_que.html" %}
+    {% include "public/secciones/equipo.html" %}
+    {% include "public/secciones/cta.html" %}
+    {% include "public/secciones/ubicacion.html" %}
+    {% include "public/secciones/resenas.html" %}
+    {% include "public/secciones/preguntas_frecuentes.html" %}
+{% endblock %}
