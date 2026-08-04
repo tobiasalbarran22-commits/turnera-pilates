@@ -278,7 +278,7 @@ td { padding: .6rem .5rem; border-bottom: 1px solid var(--line-soft); white-spac
 .dia-vacio     { background: var(--paper); color: #C7C0AA; border: 1px solid var(--line-soft); }
 .dia-sin-cupo  { background: var(--clay-tint); color: #8C4A34; }
 .dia-con-cupo  { background: var(--sage-tint); color: var(--sage-deep); font-weight: 600; }
-.dia-con-cupo:hover { transform: translateY(-2px); }
+.dia-con-cupo:hover, .dia-sin-cupo:hover { transform: translateY(-2px); }
 .dia-hoy { box-shadow: inset 0 0 0 2px var(--ink); }
 
 .leyenda { color: var(--muted); font-size: .8rem; margin-top: 1rem; }
@@ -406,6 +406,6 @@ td { padding: .6rem .5rem; border-bottom: 1px solid var(--line-soft); white-spac
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .dia-con-cupo:hover { transform: none; }
+    .dia-con-cupo:hover, .dia-sin-cupo:hover { transform: none; }
     * { transition: none !important; }
 }
