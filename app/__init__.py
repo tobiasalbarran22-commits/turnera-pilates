@@ -85,29 +85,20 @@ def create_app(config_name=None):
             mapa_url=mapa_url,
         )
 
-    # Ruta raíz: landing pública para gente nueva, pero sin interponerse
-    # en el camino de quien ya es alumna/o (ver app/auth/routes.py:
-    # COOKIE_YA_ALUMNO).
+    # Ruta raíz: siempre muestra la landing pública, sin excepción -
+    # así es como quien entra al sitio (link de Instagram, WhatsApp,
+    # buscador, etc.) siempre cae primero en la página de presentación
+    # del estudio. La única excepción es alguien que YA tiene una
+    # sesión iniciada: a esa persona la mandamos directo a su panel,
+    # no tendría sentido mostrarle la landing de nuevo cada vez que
+    # entra a la app estando logueada.
     @app.route("/")
     def index():
-        from flask import redirect, url_for, request
+        from flask import redirect, url_for
         from flask_login import current_user
-        from app.auth.routes import COOKIE_YA_ALUMNO
 
         if current_user.is_authenticated:
             return redirect(url_for("auth.redirigir_segun_rol"))
-        if request.cookies.get(COOKIE_YA_ALUMNO):
-            return redirect(url_for("auth.login"))
-        return _renderizar_landing()
-
-    # Acceso directo a la landing SIN el atajo de la cookie - para el
-    # link "Conocé el estudio" de la pantalla de login. Si ese link
-    # apuntara a "/", a cualquiera que ya inició sesión antes (osea,
-    # quien más lo va a usar para volver a mirar la landing) "/" lo
-    # mandaría derecho de vuelta al login por la cookie, sin mostrarle
-    # nunca la página.
-    @app.route("/bienvenida")
-    def bienvenida():
         return _renderizar_landing()
 
     return app

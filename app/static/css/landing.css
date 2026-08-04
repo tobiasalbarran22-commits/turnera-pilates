@@ -9,6 +9,17 @@
 
 * { box-sizing: border-box; }
 
+/* Scroll suave para los links del nav (anclas "#seccion"), con margen
+   arriba para que el título de la sección no quede tapado por la
+   barra superior, que es "sticky". Va en html (no en body) porque el
+   scroll ocurre en el elemento raíz. */
+html {
+    scroll-behavior: smooth;
+}
+section[id] {
+    scroll-margin-top: 84px;
+}
+
 body.landing {
     margin: 0;
     font-family: var(--f-body);
@@ -63,6 +74,70 @@ body.landing {
     color: rgba(251, 247, 238, .55);
     text-transform: uppercase;
     line-height: 1;
+}
+
+/* Nav de la landing (arriba a la derecha): son anclas a secciones de
+   esta misma página, no rutas - por eso no reutilizamos ".navbar" de
+   estilos.css (esa es para la navegación operativa de alumno/admin). */
+.landing-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+.landing-nav a {
+    color: rgba(251, 247, 238, .82);
+    text-decoration: none;
+    font-size: .88rem;
+    font-weight: 500;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    white-space: nowrap;
+    transition: color .15s ease, border-color .15s ease;
+}
+.landing-nav a:hover { color: var(--paper); border-color: rgba(251, 247, 238, .6); }
+
+/* Botón hamburguesa: solo existe visualmente en mobile (ver media
+   query de abajo). En desktop el nav ya entra horizontal junto al
+   logo, así que no hace falta. */
+.landing-nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--paper);
+    cursor: pointer;
+    padding: .4rem;
+    line-height: 0;
+}
+
+@media (max-width: 640px) {
+    .landing-nav-toggle { display: inline-flex; align-items: center; justify-content: center; }
+
+    /* En mobile el nav deja de ser una fila horizontal junto al logo
+       (no entra) y pasa a ser un panel plegable a todo el ancho,
+       debajo del logo+hamburguesa - el propio botón lo abre/cierra
+       (ver el <script> al final de landing.html). Usamos max-height
+       en vez de "display" para poder animar la apertura. */
+    .landing-nav {
+        flex-basis: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height .3s ease;
+    }
+    .landing-nav.abierto {
+        max-height: 260px;
+        margin-top: .5rem;
+        padding-top: .5rem;
+        border-top: 1px solid rgba(251, 247, 238, .14);
+    }
+    .landing-nav a {
+        display: block;
+        width: 100%;
+        padding: .65rem 0;
+    }
 }
 
 /* ---------- Botones ---------- */
@@ -227,6 +302,34 @@ body.landing {
 }
 .landing-seccion.oscuro .cabecera p { color: rgba(251, 247, 238, .75); }
 
+/* ---------- Quiénes somos ---------- */
+.landing-texto {
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: left;
+}
+.landing-texto p {
+    font-size: 1.04rem;
+    line-height: 1.75;
+    color: var(--ink-soft);
+    margin: 0 0 1.25rem;
+}
+.landing-texto p:last-child { margin-bottom: 0; }
+
+.landing-badge {
+    max-width: 640px;
+    margin: 2rem auto 0;
+    text-align: center;
+    font-family: var(--f-mono);
+    font-size: .8rem;
+    letter-spacing: .01em;
+    color: var(--sage-deep);
+    background: var(--sage-tint);
+    border-radius: 3px;
+    padding: .9rem 1.25rem;
+    line-height: 1.5;
+}
+
 /* ---------- Valores / diferenciales ---------- */
 .landing-valores {
     display: grid;
@@ -378,6 +481,47 @@ body.landing {
     text-transform: uppercase;
 }
 
+/* ---------- Botón flotante ("Tomar un turno") ----------
+   Fijo en la esquina inferior derecha, sobre todo el contenido, para
+   que quien esté leyendo la landing siempre tenga a mano la acción
+   principal sin tener que volver a subir hasta la barra superior.
+   Un solo estilo (oscuro + sombra) para que se lea bien tanto sobre
+   las secciones claras como sobre las oscuras. */
+.boton-flotante {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--f-body);
+    font-weight: 600;
+    font-size: .92rem;
+    padding: .85rem 1.4rem;
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(27, 25, 18, .28), 0 2px 6px rgba(27, 25, 18, .16);
+    transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.boton-flotante:hover {
+    background: var(--ink-soft);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(27, 25, 18, .32), 0 4px 10px rgba(27, 25, 18, .18);
+}
+.boton-flotante svg { flex-shrink: 0; }
+
+@media (max-width: 480px) {
+    .boton-flotante {
+        right: 1rem;
+        bottom: 1rem;
+        padding: .75rem 1.15rem;
+        font-size: .85rem;
+    }
+}
+
 /* ---------- Footer ---------- */
 .landing-footer {
     background: var(--ink);
@@ -406,12 +550,18 @@ body.landing {
     .landing-hero { padding: 4rem 0 4.5rem; }
     .landing-seccion { padding: 3.5rem 0; }
     .landing-mapa { aspect-ratio: 4 / 5; }
+    /* Deja lugar abajo para que el botón flotante no tape el último
+       link del footer en pantallas angostas (ver .boton-flotante). */
+    .landing-footer { padding-bottom: 4.5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
     .landing .boton-cta,
     .landing-valor,
-    .landing-profe .avatar { transition: none; }
+    .landing-profe .avatar,
+    .landing-nav,
+    .boton-flotante { transition: none; }
     .landing-hero .isotipo { animation: none; }
     .reveal {
         /* El script también detecta esta preferencia y agrega

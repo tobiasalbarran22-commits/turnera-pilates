@@ -26,7 +26,15 @@
                     Benincasa
                 </span>
             </span>
-            <a href="{{ url_for('auth.login') }}" class="boton-cta boton-cta-primario">Tomar un turno</a>
+            <button type="button" class="landing-nav-toggle" id="landing-nav-toggle" aria-expanded="false" aria-controls="landing-nav" aria-label="Abrir menú">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <nav class="landing-nav" id="landing-nav">
+                <a href="#quienes-somos">Quiénes somos</a>
+                <a href="#por-que">Por qué elegirnos</a>
+                <a href="#equipo">El equipo</a>
+                <a href="#ubicacion">Ubicación</a>
+            </nav>
         </div>
     </header>
 
@@ -50,7 +58,22 @@
         </div>
     </section>
 
-    <section class="landing-seccion claro">
+    <section class="landing-seccion papel" id="quienes-somos">
+        <div class="envoltura">
+            <div class="cabecera reveal">
+                <span class="eyebrow">Sobre el estudio</span>
+                <h2>Quiénes somos</h2>
+            </div>
+            <div class="landing-texto reveal">
+                <p>En Benincasa Pilates creemos que el pilates mejora la calidad de vida: un espacio para fortalecerte, cuidar tu cuerpo y dedicarte un momento a vos.</p>
+                <p>Adaptamos cada clase a tus necesidades y objetivos, para que disfrutes del pilates sin importar tu edad o experiencia.</p>
+                <p>Más que un estudio, somos un lugar donde el bienestar, la atención personalizada y el acompañamiento están en cada clase.</p>
+            </div>
+            <p class="landing-badge reveal">Damos clases para todos los niveles — desde quienes recién empiezan hasta quienes ya tienen experiencia.</p>
+        </div>
+    </section>
+
+    <section class="landing-seccion claro" id="por-que">
         <div class="envoltura">
             <div class="cabecera reveal">
                 <span class="eyebrow">Por qué Benincasa</span>
@@ -77,7 +100,7 @@
         </div>
     </section>
 
-    <section class="landing-seccion papel">
+    <section class="landing-seccion papel" id="equipo">
         <div class="envoltura">
             <div class="cabecera reveal">
                 <span class="eyebrow">El equipo</span>
@@ -123,7 +146,7 @@
         </div>
     </section>
 
-    <section class="landing-seccion claro">
+    <section class="landing-seccion claro" id="ubicacion">
         <div class="envoltura">
             <div class="cabecera reveal">
                 <span class="eyebrow">Dónde estamos</span>
@@ -192,6 +215,11 @@
         </div>
     </footer>
 
+    <a href="{{ url_for('auth.login') }}" class="boton-flotante reveal" style="--delay:.6s">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M3.5 9.5h17"/><path d="M8 3v3M16 3v3"/><path d="M8.5 14l2 2 4-4"/></svg>
+        Tomar un turno
+    </a>
+
     <script>
         // Animación de entrada: los elementos con clase "reveal" empiezan
         // invisibles/corridos (ver landing.css) y se muestran suavemente
@@ -217,6 +245,27 @@
             }, { threshold: 0.15 });
 
             elementos.forEach(function (el) { observador.observe(el); });
+        })();
+
+        // Menú hamburguesa (solo se ve en mobile, ver landing.css): abre
+        // y cierra el nav, y se cierra solo al tocar un link (para no
+        // dejarlo abierto tapando la sección a la que se acaba de saltar).
+        (function () {
+            var boton = document.getElementById('landing-nav-toggle');
+            var nav = document.getElementById('landing-nav');
+            if (!boton || !nav) return;
+
+            boton.addEventListener('click', function () {
+                var abierto = nav.classList.toggle('abierto');
+                boton.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+            });
+
+            nav.addEventListener('click', function (evento) {
+                if (evento.target.tagName === 'A') {
+                    nav.classList.remove('abierto');
+                    boton.setAttribute('aria-expanded', 'false');
+                }
+            });
         })();
     </script>
 
