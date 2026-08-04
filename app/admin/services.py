@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
 from app.models import Horario, Clase, InscripcionFija, Reserva, Usuario
+from app.integrations.email import enviar_aviso_ultima_clase
 from app.utils import ahora_estudio, hoy_estudio
 
 
@@ -178,6 +179,13 @@ def _reservar_fijos_de_horario(clase, horario):
         except IntegrityError:
             continue
 
+        # Mismo aviso que si el alumno hubiera reservado a mano (ver
+        # alumno.routes.reservar): si esta reserva automática de su
+        # horario fijo lo dejó en 0 clases disponibles, es la última
+        # del mes y hay que recordarle que renueve.
+        if not es_recuperacion and usuario.clases_disponibles == 0:
+            enviar_aviso_ultima_clase(usuario)
+
 
 def dias_fijos_permitidos(usuario):
     """
@@ -289,6 +297,13 @@ def asignar_horario_fijo(usuario, horario):
             saltadas_por_saldo += 1
             continue
         reservadas += 1
+
+        # Mismo aviso que si el alumno hubiera reservado a mano: si
+        # esta asignación de horario fijo lo dejó en 0 clases
+        # disponibles, es la última del mes y hay que recordarle que
+        # renueve (ver el mismo chequeo en _reservar_fijos_de_horario).
+        if not es_recuperacion and usuario.clases_disponibles == 0:
+            enviar_aviso_ultima_clase(usuario)
 
     db.session.commit()
     return inscripcion, reservadas, saltadas_por_saldo
