@@ -18,7 +18,7 @@
         <a href="{{ url_for('admin.usuario_nuevo') }}" class="boton">+ Nuevo usuario</a>
     </div>
 
-    <table style="width:100%; border-collapse: collapse;">
+    <table class="tabla-responsive" style="width:100%; border-collapse: collapse;">
         <thead>
             <tr style="text-align:left; border-bottom: 2px solid var(--line-soft);">
                 <th style="padding:.5rem;">Nombre</th>
@@ -35,15 +35,15 @@
         <tbody>
             {% for u in usuarios %}
             <tr style="border-bottom: 1px solid var(--line-soft); {{ 'opacity:.5;' if not u.activo }}">
-                <td style="padding:.5rem;">{{ u.nombre_completo }}</td>
-                <td style="padding:.5rem;">{{ u.email }}</td>
-                <td style="padding:.5rem;">{{ "Admin" if u.es_admin else "Alumno" }}</td>
-                <td style="padding:.5rem;">{{ "Fijo" if u.es_fijo else "Libre" if not u.es_admin else "—" }}</td>
-                <td style="padding:.5rem;">{{ u.plan.nombre if u.plan else "—" }}</td>
-                <td style="padding:.5rem;">{{ u.clases_disponibles if not u.es_admin else "—" }}</td>
-                <td style="padding:.5rem;">{{ u.clases_recuperables if not u.es_admin else "—" }}</td>
-                <td style="padding:.5rem;">{{ "Activo" if u.activo else "De baja" }}</td>
-                <td style="padding:.5rem; white-space:nowrap;">
+                <td data-label="Nombre" style="padding:.5rem;">{{ u.nombre_completo }}</td>
+                <td data-label="Email" style="padding:.5rem;">{{ u.email }}</td>
+                <td data-label="Rol" style="padding:.5rem;">{{ "Admin" if u.es_admin else "Alumno" }}</td>
+                <td data-label="Modalidad" style="padding:.5rem;">{{ "Fijo" if u.es_fijo else "Libre" if not u.es_admin else "—" }}</td>
+                <td data-label="Plan" style="padding:.5rem;">{{ u.plan.nombre if u.plan else "—" }}</td>
+                <td data-label="Clases disp." style="padding:.5rem;">{{ u.clases_disponibles if not u.es_admin else "—" }}</td>
+                <td data-label="Recuperables" style="padding:.5rem;">{{ u.clases_recuperables if not u.es_admin else "—" }}</td>
+                <td data-label="Estado" style="padding:.5rem;">{{ "Activo" if u.activo else "De baja" }}</td>
+                <td data-label="Acciones" style="padding:.5rem; white-space:nowrap;">
                     <a href="{{ url_for('admin.usuario_editar', usuario_id=u.id) }}">Editar</a>
 
                     {% if not u.es_admin %}

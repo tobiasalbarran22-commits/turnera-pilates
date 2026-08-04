@@ -317,6 +317,37 @@ td { padding: .6rem .5rem; border-bottom: 1px solid var(--line-soft); white-spac
     .tarjeta { padding: 1.25rem; }
     .calendario-header { font-size: .55rem; }
     .dia-celda { font-size: .8rem; }
+
+    /* Tablas anchas (ej: lista de usuarios): en vez de obligar a
+       scrollear horizontal para llegar a "Acciones" (donde está el
+       link "Horarios fijos"), cada fila pasa a verse como una tarjeta
+       apilada con sus columnas una debajo de la otra. */
+    .tabla-responsive thead { display: none; }
+    .tabla-responsive, .tabla-responsive tbody, .tabla-responsive tr, .tabla-responsive td {
+        display: block;
+        width: 100%;
+    }
+    .tabla-responsive tr {
+        margin-bottom: 1rem;
+        border: 1px solid var(--line-soft);
+        border-radius: 4px;
+        padding: .35rem .5rem;
+    }
+    .tabla-responsive td {
+        border-bottom: none;
+        white-space: normal !important;
+        overflow-wrap: break-word;
+    }
+    .tabla-responsive td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-family: var(--f-mono);
+        font-size: .65rem;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: .1rem;
+    }
 }
 
 @media (max-width: 400px) {
