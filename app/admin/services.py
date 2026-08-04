@@ -433,21 +433,25 @@ def reactivar_clase(clase):
     volver a asignar a mano), en vez de asumir que todos siguen
     queriendo/pudiendo ir después de un tiempo indeterminado.
 
-    Nota: como el sistema no guarda "por qué" se canceló cada Reserva
-    (a mano por el alumno, o en bloque por cancelar_clase), este
-    recupero de crédito se aplica a TODAS las Reservas de esta Clase
-    que estén en estado "cancelada" - en el caso raro de que un
-    alumno ya hubiera cancelado su propio turno acá ANTES de que el
-    admin cancelara toda la clase, también se le recuperaría ese
-    crédito. Se acepta ese caso límite a cambio de no tener que
-    guardar un motivo de cancelación aparte.
+    Solo se intenta recuperar el crédito de Reservas con
+    cancelacion_a_tiempo=True: es la marca que deja
+    _cancelar_reserva_y_acreditar (usada por cancelar_clase) en toda
+    reserva a la que efectivamente le acreditó un crédito. Si un
+    alumno había cancelado su propio turno tarde (sin acreditar nada)
+    ANTES de que el admin cancelara toda la clase, esa Reserva queda
+    con cancelacion_a_tiempo=False y no se toca acá - si la
+    incluyéramos, podríamos terminar restándole a ese alumno un
+    crédito de recuperación real que tenía guardado de otra cancelación
+    sin relación con esta clase.
 
     Devuelve cuántos créditos se pudieron recuperar efectivamente.
     """
     if not clase.cancelada:
         return 0
 
-    reservas_canceladas = Reserva.query.filter_by(clase_id=clase.id, estado="cancelada").all()
+    reservas_canceladas = Reserva.query.filter_by(
+        clase_id=clase.id, estado="cancelada", cancelacion_a_tiempo=True
+    ).all()
     tabla_usuario = Usuario.__table__
     recuperados = 0
     for reserva in reservas_canceladas:

@@ -22,7 +22,7 @@ from app.utils import hoy_estudio
 @admin_required
 def dashboard():
     total_alumnos = Usuario.query.filter_by(rol="alumno", activo=True).count()
-    clases_hoy = Clase.query.filter_by(fecha=hoy_estudio()).count()
+    clases_hoy = Clase.query.filter_by(fecha=hoy_estudio(), cancelada=False).count()
     return render_template("admin/dashboard.html", total_alumnos=total_alumnos, clases_hoy=clases_hoy)
 
 
