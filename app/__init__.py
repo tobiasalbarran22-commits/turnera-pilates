@@ -60,6 +60,21 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(alumno_bp)
 
+    @app.after_request
+    def _sin_cache_en_paginas_dinamicas(response):
+        # El calendario, "mis turnos", etc. cambian todo el tiempo
+        # (reservas, cancelaciones de otras/os alumnas/os). Sin este
+        # header, el botón "atrás" del navegador (o el caché normal de
+        # una página HTML) puede mostrar una versión vieja guardada en
+        # vez de pedirle al servidor los datos actuales - se ve como
+        # "no se actualiza en tiempo real" aunque el dato en la base
+        # ya esté bien. Los archivos estáticos (CSS/JS/imágenes) sí
+        # queremos que se cacheen, así que los dejamos afuera.
+        from flask import request
+        if not request.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        return response
+
     def _renderizar_landing():
         from urllib.parse import quote
         from flask import render_template, current_app, url_for
