@@ -210,8 +210,18 @@ body.landing {
 .landing-hero {
     background: var(--ink);
     color: var(--paper);
-    padding: 5.5rem 0 6rem;
+    padding: 6rem 0;
     text-align: center;
+    /* Casi toda la pantalla en la primera vista, sin forzar el 100vh
+       exacto (en mobile eso suele generar un salto raro cuando la
+       barra de direcciones del navegador aparece/desaparece). */
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.landing-hero .envoltura {
+    width: 100%;
 }
 .landing-hero .isotipo-wrap {
     margin: 0 auto 1.75rem;
@@ -267,7 +277,7 @@ body.landing {
 
 /* ---------- Secciones generales ---------- */
 .landing-seccion {
-    padding: 4.5rem 0;
+    padding: 7rem 0;
 }
 .landing-seccion.claro { background: var(--stone); }
 .landing-seccion.papel { background: var(--paper); }
@@ -276,7 +286,7 @@ body.landing {
 .landing-seccion .cabecera {
     text-align: center;
     max-width: 640px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 3.5rem;
 }
 .landing-seccion .eyebrow {
     display: block;
@@ -301,6 +311,30 @@ body.landing {
     font-size: 1rem;
 }
 .landing-seccion.oscuro .cabecera p { color: rgba(251, 247, 238, .75); }
+
+/* ---------- Frase / filosofía ---------- */
+.landing-frase .envoltura {
+    max-width: 720px;
+    text-align: center;
+}
+.landing-frase .isotipo-wrap {
+    margin: 0 auto 1.75rem;
+    width: 34px;
+}
+.landing-frase .isotipo {
+    display: block;
+    animation: respirar 4.5s ease-in-out infinite;
+}
+.landing-frase p {
+    font-family: var(--f-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.35rem, 3.2vw, 2.05rem);
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+    color: var(--paper);
+    margin: 0;
+}
 
 /* ---------- Quiénes somos ---------- */
 .landing-texto {
@@ -328,6 +362,20 @@ body.landing {
     border-radius: 3px;
     padding: .9rem 1.25rem;
     line-height: 1.5;
+}
+
+.landing-foto {
+    max-width: 900px;
+    margin: 2.75rem auto 0;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(27, 25, 18, .08), 0 0 0 1px var(--line-soft);
+}
+.landing-foto img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
 }
 
 /* ---------- Valores / diferenciales ---------- */
@@ -547,8 +595,8 @@ body.landing {
 
 @media (max-width: 780px) {
     .landing-valores, .landing-equipo, .landing-resenas { grid-template-columns: 1fr; }
-    .landing-hero { padding: 4rem 0 4.5rem; }
-    .landing-seccion { padding: 3.5rem 0; }
+    .landing-hero { padding: 4rem 0; min-height: 90vh; }
+    .landing-seccion { padding: 5rem 0; }
     .landing-mapa { aspect-ratio: 4 / 5; }
     /* Deja lugar abajo para que el botón flotante no tape el último
        link del footer en pantallas angostas (ver .boton-flotante). */

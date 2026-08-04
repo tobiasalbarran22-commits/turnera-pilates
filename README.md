@@ -103,7 +103,8 @@ recuperación).
 
 ## Avisos por mail y campanita de cupo
 
-El sistema manda 3 tipos de mail (usando el SMTP que configures, ver
+El sistema manda 5 tipos de mail, todos desde la cuenta
+**benincasapilates@gmail.com** (usando el SMTP que configures, ver
 más abajo):
 
 1. **Confirmación**: al reservar un turno.
@@ -115,6 +116,12 @@ más abajo):
    el alumno puede tocar "Avisarme" para esa clase. Si alguien cancela
    y se libera un lugar, se le manda un mail a todas/os las/os que
    estén esperando.
+4. **Aviso de clase cancelada**: el admin cancela una clase puntual (o
+   todas las de un día) y se le avisa a cada alumno que tenía un turno
+   ahí, aclarando que se le acreditó una clase para recuperar.
+5. **Aviso de última clase del plan**: al reservar, si esa reserva
+   deja al alumno sin clases disponibles (saldo en 0), se le manda un
+   recordatorio de que tiene que abonar para renovar el saldo.
 
 ### Configurar el envío de mails con Gmail
 
@@ -122,19 +129,24 @@ Igual que con Google Calendar: si no está configurado, el sistema
 sigue funcionando igual, simplemente no manda mails (`MAIL_HABILITADO`
 queda en `False`).
 
-1. Activá la verificación en 2 pasos en la cuenta de Gmail del
-   estudio (Google lo exige para poder generar una contraseña de
-   aplicación).
+1. Activá la verificación en 2 pasos en la cuenta de Gmail
+   **benincasapilates@gmail.com** (Google lo exige para poder generar
+   una contraseña de aplicación).
 2. Generá una ["contraseña de aplicación"](https://myaccount.google.com/apppasswords)
-   — **no** es la contraseña normal de la cuenta, es una clave de 16
-   letras que Google genera específicamente para esto.
+   para esa cuenta — **no** es la contraseña normal de la cuenta, es
+   una clave de 16 letras que Google genera específicamente para esto.
 3. Copiá `.env.example` a un archivo nuevo llamado `.env` (en la raíz
    del proyecto, al lado de `run.py`) y completá:
 
    ```
-   MAIL_USUARIO=turnera@estudio.com
+   MAIL_USUARIO=benincasapilates@gmail.com
    MAIL_PASSWORD=la-contraseña-de-aplicación-de-16-letras
    ```
+
+   `MAIL_USUARIO` ya viene con `benincasapilates@gmail.com` por
+   default en `config.py` (no hace falta repetirlo en `.env` salvo que
+   quieras usar otra cuenta) — lo único que sí o sí hay que completar
+   es `MAIL_PASSWORD`, porque esa nunca tiene un valor por default.
 
    El archivo `.env` ya está en `.gitignore`: nunca se sube al
    repositorio. La app lo lee solo automáticamente al arrancar
@@ -186,6 +198,51 @@ Calendar del estudio, seguí estos pasos (una sola vez, ~10 minutos):
    ```
 
 Listo: a partir de acá, cada turno reservado crea un evento en ese calendario, y cada cancelación lo borra. Si en algún momento Google Calendar no responde (sin internet, credenciales vencidas, etc.), la turnera sigue funcionando igual - la integración nunca bloquea una reserva.
+
+## Publicar el sitio online (Render)
+
+Para poder abrir la turnera desde el celular (o desde cualquier lugar,
+no solo la PC donde corre) hace falta publicarla en un hosting. Usamos
+[Render](https://render.com), plan gratuito. El repo ya incluye
+`render.yaml`, así que Render completa casi toda la configuración solo:
+
+1. Entrá a [render.com](https://render.com) y creá una cuenta (podés
+   registrarte directo con tu cuenta de GitHub, así queda todo
+   conectado de una).
+2. Dashboard → **"New +"** → **"Blueprint"**.
+3. Elegí el repositorio `turnera-pilates`. Render detecta el
+   `render.yaml` solo y muestra el servicio que va a crear
+   (`turnera-pilates`, plan free).
+4. Te va a pedir completar dos valores que **no** están en el repo por
+   seguridad (nunca se suben credenciales a GitHub):
+   - `MAIL_USUARIO`: `benincasapilates@gmail.com`
+   - `MAIL_PASSWORD`: la contraseña de aplicación de 16 letras (la
+     misma que está en tu `.env` local)
+5. **"Apply"** / **"Create"** → Render instala las dependencias, corre
+   `seed.py` (crea las tablas y el usuario admin) y levanta el
+   servidor con `gunicorn`. Tarda unos minutos la primera vez.
+6. Cuando termina, te da una URL fija tipo
+   `https://turnera-pilates.onrender.com` — esa es la que abrís desde
+   el celular (con wifi o datos, es pública) o le pasás a quien
+   quieras.
+7. Entrá con el usuario admin del seed (`admin@estudio.com` /
+   `cambiar123`) y **cambiá esa contraseña enseguida** desde el panel.
+
+**Dos límites del plan free a tener en cuenta** (para probar están
+bien, para uso real del estudio no):
+- El servicio "duerme" después de ~15 minutos sin visitas — la
+  primera carga después de eso tarda 30-50 segundos en responder (las
+  siguientes son normales).
+- El disco no es persistente: cada vez que se hace un redeploy (o el
+  servicio se reinicia), se pierde la base SQLite y vuelve al estado
+  inicial de `seed.py` (usuarios, reservas, todo). Sirve perfecto para
+  probar la web y el envío de mails desde otros dispositivos; para que
+  el estudio la use de verdad con datos que tienen que persistir, hay
+  que pasar a un plan pago con disco persistente o a una base Postgres
+  (Render ofrece una gratis, pero expira a los 90 días).
+
+Cada vez que hagas `git push` a `main`, Render vuelve a desplegar solo
+con los cambios nuevos.
 
 ## Estado actual
 

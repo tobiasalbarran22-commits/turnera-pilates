@@ -81,9 +81,17 @@ class Config:
     # tenga el estudio. Si no está configurado, el sistema sigue
     # funcionando igual, simplemente sin mandar mails (mismo criterio
     # que la integración con Google Calendar).
+    # La cuenta de Gmail del estudio: todos los mails del sistema salen
+    # desde acá. MAIL_USUARIO es la cuenta que se autentica contra el
+    # servidor SMTP de Gmail - por eso también es el remitente por
+    # default (Gmail no deja mandar con un "From" distinto al de la
+    # cuenta autenticada, salvo que se configure un alias). La
+    # contraseña NUNCA tiene un default: tiene que venir sí o sí de la
+    # variable de entorno MAIL_PASSWORD, usando una "contraseña de
+    # aplicación" de Google (ver README).
     MAIL_SERVIDOR = os.environ.get("MAIL_SERVIDOR", "smtp.gmail.com")
     MAIL_PUERTO = int(os.environ.get("MAIL_PUERTO", 587))
-    MAIL_USUARIO = os.environ.get("MAIL_USUARIO", "")
+    MAIL_USUARIO = os.environ.get("MAIL_USUARIO", "benincasapilates@gmail.com")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_REMITENTE = os.environ.get("MAIL_REMITENTE", MAIL_USUARIO)
     MAIL_HABILITADO = bool(MAIL_USUARIO and MAIL_PASSWORD)

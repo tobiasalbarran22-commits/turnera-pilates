@@ -3,13 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Benincasa Pilates — Mejorando vidas, un movimiento a la vez</title>
-    <meta name="description" content="Estudio de pilates reformer con atención personalizada, en grupos de hasta 5 personas. Reservá tu clase online o escribinos por WhatsApp.">
+    <title>Benincasa Pilates | Estudio de Pilates Reformer en Villa Santa Rita, CABA</title>
+    <meta name="description" content="Clases de pilates reformer en grupos de hasta 5 personas, con atención personalizada. Villa Santa Rita, CABA. Reservá tu clase online o escribinos por WhatsApp.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    <!-- Open Graph / Facebook, WhatsApp, Instagram (previsualización al compartir el link) -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="es_AR">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:site_name" content="Benincasa Pilates">
+    <meta property="og:title" content="Benincasa Pilates | Estudio de Pilates Reformer en Villa Santa Rita, CABA">
+    <meta property="og:description" content="Clases de pilates reformer en grupos de hasta 5 personas, con atención personalizada. Reservá tu clase online o escribinos por WhatsApp.">
+    <meta property="og:image" content="{{ og_image_url }}">
+
+    <!-- Twitter/X Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Benincasa Pilates | Estudio de Pilates Reformer en Villa Santa Rita, CABA">
+    <meta name="twitter:description" content="Clases de pilates reformer en grupos de hasta 5 personas, con atención personalizada.">
+    <meta name="twitter:image" content="{{ og_image_url }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+
+    <!-- Datos estructurados (schema.org): ayudan a que Google entienda que
+         esto es un estudio/gimnasio, y pueda mostrar dirección, teléfono
+         y horario directo en los resultados de búsqueda. -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ExerciseGym",
+        "name": "Benincasa Pilates",
+        "image": "{{ og_image_url }}",
+        "url": "{{ canonical_url }}",
+        "telephone": "+{{ whatsapp_numero }}",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Campana 1495",
+            "addressLocality": "Villa Santa Rita, Ciudad Autónoma de Buenos Aires",
+            "addressCountry": "AR"
+        },
+        "sameAs": ["{{ instagram_url }}"]
+    }
+    </script>
 </head>
 <body class="landing">
 
@@ -30,6 +69,7 @@
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
             <nav class="landing-nav" id="landing-nav">
+                <a href="#filosofia">Nuestra esencia</a>
                 <a href="#quienes-somos">Quiénes somos</a>
                 <a href="#por-que">Por qué elegirnos</a>
                 <a href="#equipo">El equipo</a>
@@ -47,21 +87,32 @@
                     <line x1="15" y1="4" x2="15" y2="26" stroke="#FBF7EE" stroke-width="1" stroke-dasharray="1.5 2.5"/>
                 </svg>
             </div>
-            <span class="eyebrow reveal" style="--delay:.1s">Estudio de pilates reformer</span>
-            <h1 class="reveal" style="--delay:.2s">Benincasa Pilates</h1>
-            <p class="lema reveal" style="--delay:.3s">Mejorando vidas, un movimiento a la vez.</p>
-            <p class="sub reveal" style="--delay:.4s">Te acompañamos de cerca, clase a clase, en un espacio pensado para que cada movimiento se sienta tuyo.</p>
-            <div class="fila-botones reveal" style="--delay:.5s">
+            <h1 class="reveal" style="--delay:.1s">Benincasa Pilates</h1>
+            <p class="lema reveal" style="--delay:.2s">Mejorando vidas, un movimiento a la vez.</p>
+            <p class="sub reveal" style="--delay:.3s">Te acompañamos de cerca, clase a clase, en un espacio pensado para que cada movimiento se sienta tuyo.</p>
+            <div class="fila-botones reveal" style="--delay:.4s">
                 <a href="{{ url_for('auth.login') }}" class="boton-cta boton-cta-primario">Tomar un turno</a>
                 <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-secundario">Escribinos por WhatsApp</a>
             </div>
         </div>
     </section>
 
+    <section class="landing-seccion oscuro landing-frase" id="filosofia">
+        <div class="envoltura">
+            <div class="isotipo-wrap reveal">
+                <svg class="isotipo" width="34" height="34" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="13" cy="15" r="10" stroke="#B3A98C" stroke-width="1.4"/>
+                    <circle cx="17" cy="15" r="10" stroke="#FBF7EE" stroke-width="1.4"/>
+                    <line x1="15" y1="4" x2="15" y2="26" stroke="#FBF7EE" stroke-width="1" stroke-dasharray="1.5 2.5"/>
+                </svg>
+            </div>
+            <p class="reveal" style="--delay:.1s">En Benincasa Pilates creemos que el mejor momento del día es ese en el que decidís priorizarte. Un espacio para desconectar de la rutina, conectar con tu cuerpo y dedicarte el tiempo que merecés.</p>
+        </div>
+    </section>
+
     <section class="landing-seccion papel" id="quienes-somos">
         <div class="envoltura">
             <div class="cabecera reveal">
-                <span class="eyebrow">Sobre el estudio</span>
                 <h2>Quiénes somos</h2>
             </div>
             <div class="landing-texto reveal">
@@ -70,13 +121,15 @@
                 <p>Más que un estudio, somos un lugar donde el bienestar, la atención personalizada y el acompañamiento están en cada clase.</p>
             </div>
             <p class="landing-badge reveal">Damos clases para todos los niveles — desde quienes recién empiezan hasta quienes ya tienen experiencia.</p>
+            <figure class="landing-foto reveal">
+                <img src="{{ url_for('static', filename='img/estudio-interior.jpg') }}" alt="Sala de Benincasa Pilates con camillas reformer de madera junto a ventanas con luz natural" loading="lazy" decoding="async">
+            </figure>
         </div>
     </section>
 
     <section class="landing-seccion claro" id="por-que">
         <div class="envoltura">
             <div class="cabecera reveal">
-                <span class="eyebrow">Por qué Benincasa</span>
                 <h2>Atención personalizada, de verdad</h2>
                 <p>Lo que nos distingue no es solo el método — es la manera en que te acompañamos, desde el primer movimiento.</p>
             </div>
@@ -103,7 +156,6 @@
     <section class="landing-seccion papel" id="equipo">
         <div class="envoltura">
             <div class="cabecera reveal">
-                <span class="eyebrow">El equipo</span>
                 <h2>¿Quiénes te reciben?</h2>
                 <p>Un equipo chico, para conocerte de verdad, clase a clase.</p>
             </div>
@@ -130,7 +182,6 @@
     <section class="landing-seccion oscuro landing-contacto">
         <div class="envoltura">
             <div class="cabecera reveal">
-                <span class="eyebrow">Empezá hoy</span>
                 <h2>¿Lista/o para tu primera clase?</h2>
                 <p>Contanos qué buscás y te ayudamos a encontrar tu horario ideal.</p>
             </div>

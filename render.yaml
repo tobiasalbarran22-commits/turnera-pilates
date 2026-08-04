@@ -1,0 +1,20 @@
+# Blueprint de Render: describe el servicio para que, al conectar este
+# repo en Render, la mayoría de la configuración se complete sola (en
+# vez de tener que cargar cada campo a mano desde el dashboard).
+# Ver el README para el paso a paso de cómo usarlo.
+services:
+  - type: web
+    name: turnera-pilates
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt && python seed.py"
+    startCommand: "gunicorn run:app"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MAIL_USUARIO
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false

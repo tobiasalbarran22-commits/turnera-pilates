@@ -62,10 +62,11 @@ def create_app(config_name=None):
 
     def _renderizar_landing():
         from urllib.parse import quote
-        from flask import render_template, current_app
+        from flask import render_template, current_app, url_for
 
         mensaje_whatsapp = quote("¡Hola! Quiero consultar por las clases de pilates.")
-        whatsapp_url = f"https://wa.me/{current_app.config['WHATSAPP_NUMERO']}?text={mensaje_whatsapp}"
+        whatsapp_numero = current_app.config["WHATSAPP_NUMERO"]
+        whatsapp_url = f"https://wa.me/{whatsapp_numero}?text={mensaje_whatsapp}"
 
         direccion = current_app.config["DIRECCION_ESTUDIO"]
         consulta_mapa = quote(f"Benincasa Pilates, {direccion}")
@@ -79,10 +80,20 @@ def create_app(config_name=None):
         return render_template(
             "landing.html",
             whatsapp_url=whatsapp_url,
+            whatsapp_numero=whatsapp_numero,
             instagram_url=current_app.config["INSTAGRAM_URL"],
             direccion=direccion,
             mapa_embed_url=mapa_embed_url,
             mapa_url=mapa_url,
+            # _external=True arma la URL completa (con dominio) en vez de
+            # una ruta relativa - las etiquetas SEO (canonical, Open
+            # Graph, JSON-LD) tienen que llevar la URL completa. Al
+            # calcularla con url_for en vez de escribirla a mano, se
+            # arma sola con el dominio real donde esté corriendo la app
+            # en cada momento (localhost en desarrollo, el dominio real
+            # una vez publicada), sin tener que hardcodear ninguno.
+            canonical_url=url_for("index", _external=True),
+            og_image_url=url_for("static", filename="img/estudio-interior.jpg", _external=True),
         )
 
     # Ruta raíz: siempre muestra la landing pública, sin excepción -
@@ -100,5 +111,39 @@ def create_app(config_name=None):
         if current_user.is_authenticated:
             return redirect(url_for("auth.redirigir_segun_rol"))
         return _renderizar_landing()
+
+    # robots.txt y sitemap.xml: le dicen a Google qué puede rastrear e
+    # indexar (la landing) y qué NO (todo lo que requiere login - no
+    # tiene sentido para un buscador, y así tampoco aparece por error
+    # en resultados de búsqueda). Se arman con url_for para que las
+    # URLs sean siempre las reales, sin hardcodear un dominio.
+    @app.route("/robots.txt")
+    def robots_txt():
+        from flask import Response, url_for
+        contenido = (
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /admin/\n"
+            "Disallow: /alumno/\n"
+            "Disallow: /login\n"
+            "Disallow: /cambiar-password\n"
+            f"\nSitemap: {url_for('sitemap_xml', _external=True)}\n"
+        )
+        return Response(contenido, mimetype="text/plain")
+
+    @app.route("/sitemap.xml")
+    def sitemap_xml():
+        from flask import Response, url_for
+        contenido = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            "  <url>\n"
+            f"    <loc>{url_for('index', _external=True)}</loc>\n"
+            "    <changefreq>monthly</changefreq>\n"
+            "    <priority>1.0</priority>\n"
+            "  </url>\n"
+            "</urlset>\n"
+        )
+        return Response(contenido, mimetype="application/xml")
 
     return app
