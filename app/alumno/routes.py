@@ -11,7 +11,7 @@ from app.models import Clase, Reserva, AvisoCupo
 from app.admin.services import generar_clases_para_mes
 from app.alumno.services import reservar_clase, cancelar_reserva, notificar_cupo_liberado
 from app.integrations.google_calendar import crear_evento_para_reserva, eliminar_evento
-from app.integrations.email import enviar_confirmacion_reserva
+from app.integrations.email import enviar_confirmacion_reserva, enviar_aviso_ultima_clase
 from app.utils import ahora_estudio, hoy_estudio
 
 
@@ -127,6 +127,15 @@ def reservar(clase_id):
         # no hay mail configurado o falla el envío, la reserva ya
         # quedó guardada de todos modos).
         enviar_confirmacion_reserva(nueva_reserva)
+
+        # Si esta reserva gastó el saldo NORMAL del plan (no un
+        # crédito de recuperación) y no le queda más, es la última
+        # clase del mes: le recordamos que tiene que abonar para que
+        # se le renueve. current_user.clases_disponibles se relee
+        # solo de la base (SQLAlchemy expira los objetos después de
+        # cada commit), así que ya refleja el descuento de esta reserva.
+        if not nueva_reserva.es_recuperacion and current_user.clases_disponibles == 0:
+            enviar_aviso_ultima_clase(current_user)
 
         flash(
             f"¡Turno reservado para el {clase.fecha.strftime('%d/%m')} a las "

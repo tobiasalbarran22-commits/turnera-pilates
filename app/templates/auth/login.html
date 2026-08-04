@@ -6,6 +6,7 @@
     <div class="tarjeta tarjeta-login">
         <span class="eyebrow">Turnera · Benincasa Pilates</span>
         <h1>Bienvenida/o</h1>
+        <p class="lema">Mejorando vidas, un movimiento a la vez.</p>
         <p class="sub">Ingresá con tu cuenta para reservar o gestionar tus clases.</p>
         <form method="POST">
             {{ form.hidden_tag() }}
@@ -24,6 +25,9 @@
 
             {{ form.submit(class="boton", style="width:100%;") }}
         </form>
+        <p style="margin-top:1.25rem; margin-bottom:0; text-align:center; font-size:.85rem; color:var(--muted);">
+            ¿Todavía no sos alumna/o? <a href="{{ url_for('bienvenida') }}">Conocé el estudio</a>
+        </p>
     </div>
 </div>
 {% endblock %}

@@ -10,10 +10,11 @@ from calendar import monthrange
 from datetime import date, datetime, timedelta
 
 from flask import current_app
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
-from app.models import Horario, Clase, InscripcionFija, Reserva
+from app.models import Horario, Clase, InscripcionFija, Reserva, Usuario
 from app.utils import ahora_estudio, hoy_estudio
 
 
@@ -317,3 +318,147 @@ def quitar_horario_fijo(inscripcion):
 
     db.session.delete(inscripcion)
     db.session.commit()
+
+
+def _cancelar_reserva_y_acreditar(reserva, ahora):
+    """
+    Cancela UNA Reserva de forma atómica (con UPDATE ... WHERE
+    estado='reservada', igual que en alumno.services.cancelar_reserva
+    y Usuario.consumir_clase - ver esas dos para la explicación
+    completa) y le acredita al alumno una clase para recuperar. Se usa
+    desde desactivar_horario y cancelar_clase, que son acciones del
+    ADMIN que pueden coincidir en el tiempo con que el propio alumno
+    cancele esa misma reserva por su cuenta: sin el WHERE, ambas
+    "cancelaciones" pasarían y el alumno terminaría acreditado dos
+    veces por una sola clase perdida.
+
+    Devuelve True si esta llamada fue la que efectivamente la canceló,
+    False si ya estaba cancelada de antes (en cuyo caso no se acredita
+    de nuevo).
+    """
+    tabla_reserva = Reserva.__table__
+    resultado = db.session.execute(
+        update(tabla_reserva)
+        .where(tabla_reserva.c.id == reserva.id, tabla_reserva.c.estado == "reservada")
+        .values(estado="cancelada", fecha_cancelacion=ahora, cancelacion_a_tiempo=True)
+    )
+    if not resultado.rowcount:
+        return False
+
+    db.session.execute(
+        update(Usuario.__table__)
+        .where(Usuario.__table__.c.id == reserva.usuario_id)
+        .values(clases_recuperables=Usuario.__table__.c.clases_recuperables + 1)
+    )
+    db.session.expire(reserva, ["estado", "fecha_cancelacion", "cancelacion_a_tiempo"])
+    return True
+
+
+def cancelar_clase(clase):
+    """
+    Cancela una Clase puntual completa (ej: feriado, el estudio no
+    abre ese día). A diferencia de quitar_horario_fijo -que solo deja
+    de reservar automáticamente hacia ADELANTE a los alumnos fijos de
+    un Horario, sin tocar clases ya generadas- esto cancela UNA fecha
+    concreta que ya existe en el calendario.
+
+    Cancela todas las Reservas activas de esa Clase y le acredita a
+    cada alumno afectado una clase para recuperar dentro de este mes,
+    para que pueda elegir otro día/horario. A propósito NO respeta acá
+    el tope de MAX_CLASES_RECUPERABLES que sí aplica cuando un ALUMNO
+    cancela tarde (ver cancelar_reserva en app/alumno/services.py):
+    ese tope existe para desalentar cancelaciones tardías del propio
+    alumno, no para limitar cuánto se le compensa cuando es el
+    ESTUDIO el que cancela. El alumno no debería perder valor por una
+    decisión que no tomó él.
+
+    Devuelve la lista de Reservas que se cancelaron (para que la ruta
+    pueda avisar por mail a cada alumno y borrar el evento de Google
+    Calendar si tenían uno, después del commit). Si la Clase ya estaba
+    cancelada, no hace nada y devuelve una lista vacía.
+    """
+    if clase.cancelada:
+        return []
+
+    ahora = ahora_estudio()
+    reservas_activas = Reserva.query.filter_by(clase_id=clase.id, estado="reservada").all()
+
+    reservas_canceladas = []
+    for reserva in reservas_activas:
+        if _cancelar_reserva_y_acreditar(reserva, ahora):
+            reservas_canceladas.append(reserva)
+
+    clase.cancelada = True
+    db.session.commit()
+    return reservas_canceladas
+
+
+def cancelar_clases_del_dia(fecha):
+    """
+    Cancela TODAS las clases (de cualquier horario) de una fecha
+    puntual - pensado para un feriado o un día que el estudio no abre,
+    sin tener que cancelar clase por clase ni dar de baja ningún
+    Horario semanal entero. Por dentro llama a cancelar_clase() por
+    cada Clase del día, así que cada alumno afectado recibe el mismo
+    trato (turno cancelado, crédito de recuperación, aviso por mail).
+
+    Devuelve la lista de Reservas que se cancelaron, juntando las de
+    todas las clases del día.
+    """
+    clases_del_dia = Clase.query.filter_by(fecha=fecha, cancelada=False).all()
+    reservas_canceladas = []
+    for clase in clases_del_dia:
+        reservas_canceladas.extend(cancelar_clase(clase))
+    return reservas_canceladas
+
+
+def reactivar_clase(clase):
+    """
+    Reactiva una Clase que se había cancelado por error (ver
+    cancelar_clase): la vuelve a dejar disponible para reservar.
+
+    Para optimizar el saldo de los alumnos al máximo, le recupera a
+    cada afectado el crédito de recuperación que se le había
+    acreditado por la cancelación - pero SOLO si todavía lo tiene sin
+    gastar (con el mismo UPDATE ... WHERE clases_recuperables > 0
+    atómico que se usa en el resto del sistema). Si ya lo usó para
+    reservar otra clase mientras tanto, no se lo podemos sacar sin
+    romper esa otra reserva, así que se lo dejamos - no hay forma de
+    "deshacer" un crédito que ya se gastó sin cancelar lo que se
+    reservó con él.
+
+    OJO: esto NO vuelve a reservar automáticamente a quienes tenían un
+    turno ahí antes de la cancelación - la clase queda abierta para
+    que la reserven de nuevo (por su cuenta, o el admin se los puede
+    volver a asignar a mano), en vez de asumir que todos siguen
+    queriendo/pudiendo ir después de un tiempo indeterminado.
+
+    Nota: como el sistema no guarda "por qué" se canceló cada Reserva
+    (a mano por el alumno, o en bloque por cancelar_clase), este
+    recupero de crédito se aplica a TODAS las Reservas de esta Clase
+    que estén en estado "cancelada" - en el caso raro de que un
+    alumno ya hubiera cancelado su propio turno acá ANTES de que el
+    admin cancelara toda la clase, también se le recuperaría ese
+    crédito. Se acepta ese caso límite a cambio de no tener que
+    guardar un motivo de cancelación aparte.
+
+    Devuelve cuántos créditos se pudieron recuperar efectivamente.
+    """
+    if not clase.cancelada:
+        return 0
+
+    reservas_canceladas = Reserva.query.filter_by(clase_id=clase.id, estado="cancelada").all()
+    tabla_usuario = Usuario.__table__
+    recuperados = 0
+    for reserva in reservas_canceladas:
+        resultado = db.session.execute(
+            update(tabla_usuario)
+            .where(tabla_usuario.c.id == reserva.usuario_id, tabla_usuario.c.clases_recuperables > 0)
+            .values(clases_recuperables=tabla_usuario.c.clases_recuperables - 1)
+        )
+        if resultado.rowcount:
+            recuperados += 1
+
+    clase.cancelada = False
+    db.session.commit()
+    return recuperados

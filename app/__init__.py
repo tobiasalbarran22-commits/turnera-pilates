@@ -60,13 +60,54 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(alumno_bp)
 
-    # Ruta raíz: manda a cada uno a donde corresponda
+    def _renderizar_landing():
+        from urllib.parse import quote
+        from flask import render_template, current_app
+
+        mensaje_whatsapp = quote("¡Hola! Quiero consultar por las clases de pilates.")
+        whatsapp_url = f"https://wa.me/{current_app.config['WHATSAPP_NUMERO']}?text={mensaje_whatsapp}"
+
+        direccion = current_app.config["DIRECCION_ESTUDIO"]
+        consulta_mapa = quote(f"Benincasa Pilates, {direccion}")
+        # Embed sin API key (el "output=embed" clásico de Google Maps,
+        # gratis y sin necesidad de una cuenta de Google Cloud) para el
+        # iframe, y un link normal de búsqueda para "Cómo llegar" /
+        # "Ver en Google Maps".
+        mapa_embed_url = f"https://www.google.com/maps?q={consulta_mapa}&output=embed"
+        mapa_url = f"https://www.google.com/maps/search/?api=1&query={consulta_mapa}"
+
+        return render_template(
+            "landing.html",
+            whatsapp_url=whatsapp_url,
+            instagram_url=current_app.config["INSTAGRAM_URL"],
+            direccion=direccion,
+            mapa_embed_url=mapa_embed_url,
+            mapa_url=mapa_url,
+        )
+
+    # Ruta raíz: landing pública para gente nueva, pero sin interponerse
+    # en el camino de quien ya es alumna/o (ver app/auth/routes.py:
+    # COOKIE_YA_ALUMNO).
     @app.route("/")
     def index():
-        from flask import redirect, url_for
+        from flask import redirect, url_for, request
         from flask_login import current_user
+        from app.auth.routes import COOKIE_YA_ALUMNO
+
         if current_user.is_authenticated:
             return redirect(url_for("auth.redirigir_segun_rol"))
-        return redirect(url_for("auth.login"))
+        if request.cookies.get(COOKIE_YA_ALUMNO):
+            return redirect(url_for("auth.login"))
+        return _renderizar_landing()
+
+    # Acceso directo a la landing SIN el atajo de la cookie - para el
+    # link "Conocé el estudio" de la pantalla de login. Si ese link
+    # apuntara a "/", a cualquiera que ya inició sesión antes (osea,
+    # quien más lo va a usar para volver a mirar la landing) "/" lo
+    # mandaría derecho de vuelta al login por la cookie, sin mostrarle
+    # nunca la página.
+    @app.route("/bienvenida")
+    def bienvenida():
+        return _renderizar_landing()
 
     return app

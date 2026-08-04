@@ -8,8 +8,12 @@ from app.decorators import admin_required
 from app.extensions import db
 from app.models import Usuario, Clase, Plan, Horario, InscripcionFija, Reserva, AvisoCupo
 from app.admin.forms import UsuarioForm, HorarioForm, DIAS_SEMANA
-from app.admin.services import generar_clases_para_mes, asignar_horario_fijo, quitar_horario_fijo
+from app.admin.services import (
+    generar_clases_para_mes, asignar_horario_fijo, quitar_horario_fijo,
+    cancelar_clase, cancelar_clases_del_dia, reactivar_clase,
+)
 from app.integrations.google_calendar import eliminar_evento
+from app.integrations.email import enviar_aviso_clase_cancelada
 from app.utils import hoy_estudio
 
 
@@ -382,8 +386,11 @@ def horario_toggle(horario_id):
     """
     Activa/desactiva un horario de la grilla semanal SIN borrarlo.
     Un horario desactivado deja de generar clases nuevas hacia
-    adelante, pero no toca las clases que ya se generaron en el
-    pasado (para no romper reservas ya hechas por alumnos).
+    adelante, pero no toca las clases que ya se generaron ni las
+    reservas que ya tenían los alumnos (para eso están, aparte,
+    "Cancelar clase" y "Cancelar todas las clases del día" en
+    /clases - pensadas para un día puntual, ej. un feriado, sin tener
+    que dar de baja el horario semanal entero).
     """
     horario = Horario.query.get_or_404(horario_id)
     horario.activo = not horario.activo
@@ -462,6 +469,20 @@ def clases():
             .all()
         )
 
+    # Para el botón de "cancelar todas las clases del día": la lista
+    # combinada (sin repetidos) de alumnas/os afectados en CUALQUIER
+    # clase no cancelada de este día, para mostrarla en la confirmación
+    # antes de aplicar la baja masiva (ver clases.html).
+    afectados_del_dia = []
+    ids_ya_agregados = set()
+    for clase in clases_del_dia:
+        if clase.cancelada:
+            continue
+        for reserva in clase.reservas_activas:
+            if reserva.usuario_id not in ids_ya_agregados:
+                ids_ya_agregados.add(reserva.usuario_id)
+                afectados_del_dia.append(reserva.usuario)
+
     return render_template(
         "admin/clases.html",
         clases=clases_del_dia,
@@ -469,4 +490,117 @@ def clases():
         hoy=hoy,
         dia_anterior=fecha - timedelta(days=1),
         dia_siguiente=fecha + timedelta(days=1),
+        afectados_del_dia=afectados_del_dia,
     )
+
+
+@bp.route("/clases/<int:clase_id>/cancelar", methods=["POST"])
+@login_required
+@admin_required
+def clase_cancelar(clase_id):
+    """
+    Cancela una clase puntual (ej: feriado). La confirmación de "¿estás
+    seguro?" con el detalle de a quién afecta se le muestra al admin
+    del lado del navegador, en la misma página de /clases (ver
+    clases.html: ahí mismo ya se lista quién está anotado en cada
+    clase). Acá del lado del servidor cancelamos de verdad: se le
+    avisa por mail a cada alumno afectado y se le acredita una clase
+    para recuperar (ver admin.services.cancelar_clase).
+    """
+    clase = Clase.query.get_or_404(clase_id)
+    fecha_str = clase.fecha.isoformat()
+
+    if clase.cancelada:
+        flash("Esta clase ya estaba cancelada.", "info")
+        return redirect(url_for("admin.clases", fecha=fecha_str))
+
+    reservas_canceladas = cancelar_clase(clase)
+
+    # Google Calendar y el mail son "best-effort" (ver el resto del
+    # sistema): la clase ya quedó cancelada en nuestra base pase lo
+    # que pase acá.
+    for reserva in reservas_canceladas:
+        if reserva.google_event_id:
+            eliminar_evento(reserva.google_event_id)
+        enviar_aviso_clase_cancelada(reserva.usuario, clase)
+
+    if reservas_canceladas:
+        flash(
+            f"Clase del {clase.fecha.strftime('%d/%m')} a las {clase.hora_inicio.strftime('%H:%M')}hs cancelada. "
+            f"Se avisó por mail a {len(reservas_canceladas)} alumno(s) y se le acreditó una clase para recuperar "
+            "a cada uno.", "warning"
+        )
+    else:
+        flash(
+            f"Clase del {clase.fecha.strftime('%d/%m')} a las {clase.hora_inicio.strftime('%H:%M')}hs cancelada. "
+            "No tenía alumnos anotados.", "info"
+        )
+
+    return redirect(url_for("admin.clases", fecha=fecha_str))
+
+
+@bp.route("/clases/<int:clase_id>/reactivar", methods=["POST"])
+@login_required
+@admin_required
+def clase_reactivar(clase_id):
+    """
+    Reactiva una clase cancelada por error (ver
+    admin.services.reactivar_clase): la vuelve a dejar disponible para
+    reservar, y recupera el crédito de recuperación de cada alumno
+    afectado si todavía no lo gastó en otra clase.
+    """
+    clase = Clase.query.get_or_404(clase_id)
+    fecha_str = clase.fecha.isoformat()
+
+    if not clase.cancelada:
+        flash("Esta clase no estaba cancelada.", "info")
+        return redirect(url_for("admin.clases", fecha=fecha_str))
+
+    recuperados = reactivar_clase(clase)
+
+    mensaje = (
+        f"Clase del {clase.fecha.strftime('%d/%m')} a las {clase.hora_inicio.strftime('%H:%M')}hs reactivada. "
+        "Ya está disponible para reservar de nuevo."
+    )
+    if recuperados:
+        mensaje += f" Se recuperaron {recuperados} crédito(s) de recuperación que todavía no se habían usado."
+    flash(mensaje, "success")
+
+    return redirect(url_for("admin.clases", fecha=fecha_str))
+
+
+@bp.route("/clases/cancelar-dia", methods=["POST"])
+@login_required
+@admin_required
+def clases_cancelar_dia():
+    """
+    Cancela TODAS las clases de una fecha puntual (cualquier horario,
+    no solo uno) de una sola vez - pensado para un feriado o un día
+    entero que el estudio no abre, sin tener que cancelar clase por
+    clase. Mismo criterio que clase_cancelar: la confirmación de
+    "¿estás seguro?" con el detalle de a quién afecta se le muestra al
+    admin del lado del navegador (ver clases.html); acá se aplica de
+    verdad, clase por clase (ver admin.services.cancelar_clases_del_dia).
+    """
+    fecha_str = request.form.get("fecha")
+    try:
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        abort(404)
+
+    reservas_canceladas = cancelar_clases_del_dia(fecha)
+
+    for reserva in reservas_canceladas:
+        if reserva.google_event_id:
+            eliminar_evento(reserva.google_event_id)
+        enviar_aviso_clase_cancelada(reserva.usuario, reserva.clase)
+
+    if reservas_canceladas:
+        flash(
+            f"Se cancelaron todas las clases del {fecha.strftime('%d/%m')}. Se avisó por mail a "
+            f"{len(reservas_canceladas)} alumno(s) y se le acreditó una clase para recuperar a cada uno.", "warning"
+        )
+    else:
+        flash(f"Se cancelaron todas las clases del {fecha.strftime('%d/%m')}. No tenían alumnos anotados.", "info")
+
+    return redirect(url_for("admin.clases", fecha=fecha_str))

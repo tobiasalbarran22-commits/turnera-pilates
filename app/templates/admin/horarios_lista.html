@@ -21,7 +21,8 @@
                 <td style="padding:.4rem; width:120px;">{{ h.hora.strftime('%H:%M') }} hs</td>
                 <td style="padding:.4rem;">{{ "Activo" if h.activo else "Inactivo" }}</td>
                 <td style="padding:.4rem; text-align:right;">
-                    <form method="POST" action="{{ url_for('admin.horario_toggle', horario_id=h.id) }}" style="display:inline;">
+                    <form method="POST" action="{{ url_for('admin.horario_toggle', horario_id=h.id) }}" style="display:inline;"
+                          {% if h.activo %}onsubmit="return confirm('¿Desactivar el horario de las {{ h.hora.strftime('%H:%M') }}hs? Deja de generar clases nuevas hacia adelante (las que ya estén generadas y sus reservas no se tocan).');"{% endif %}>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" style="background:none;border:none;color:var(--sage-deep); cursor:pointer; padding:0; font:inherit;">{{ "Desactivar" if h.activo else "Activar" }}</button>
                     </form>

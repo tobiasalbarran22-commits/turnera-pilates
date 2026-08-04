@@ -1,12 +1,18 @@
 """
 ENVÍO DE EMAILS
 ================
-Tres tipos de mail que manda el sistema:
+Cinco tipos de mail que manda el sistema:
 1. Confirmación: "tu clase quedó reservada" (al momento de reservar).
 2. Recordatorio: "mañana tenés clase" (un script aparte lo corre una
    vez por día, ver enviar_recordatorios.py en la raíz del proyecto).
 3. Aviso de cupo liberado (la "campanita"): un alumno pidió que le
    avisen si se libera un lugar en una clase llena, y se liberó.
+4. Aviso de clase cancelada: el admin canceló una clase puntual (ver
+   admin.services.cancelar_clase) y hay que avisarle a cada alumno
+   que tenía un turno reservado ahí.
+5. Aviso de última clase del plan: el alumno acaba de reservar y se
+   quedó sin saldo (clases_disponibles llegó a 0) - se le recuerda que
+   tiene que abonar para que el saldo se renueve el próximo mes.
 
 Usamos SMTP simple (smtplib, de la librería estándar de Python) en vez
 de atar el proyecto a un proveedor en particular: sirve con Gmail,
@@ -66,6 +72,30 @@ def enviar_recordatorio_clase(reserva):
         <p>Hola {usuario.nombre},</p>
         <p>Te recordamos que <strong>mañana {clase.fecha.strftime('%d/%m/%Y')}</strong>
         tenés clase a las <strong>{clase.hora_inicio.strftime('%H:%M')}hs</strong>.</p>
+    """
+    return _enviar(usuario.email, asunto, cuerpo)
+
+
+def enviar_aviso_clase_cancelada(usuario, clase):
+    asunto = f"Clase cancelada — {clase.fecha.strftime('%d/%m')} {clase.hora_inicio.strftime('%H:%M')}hs"
+    cuerpo = f"""
+        <p>Hola {usuario.nombre},</p>
+        <p>Te avisamos que el estudio canceló la clase del <strong>{clase.fecha.strftime('%d/%m/%Y')}</strong>
+        a las <strong>{clase.hora_inicio.strftime('%H:%M')}hs</strong> en la que estabas anotada/o.</p>
+        <p>Te acreditamos una clase para recuperar: entrá a la turnera y elegí otro día/horario
+        disponible dentro de este mes.</p>
+    """
+    return _enviar(usuario.email, asunto, cuerpo)
+
+
+def enviar_aviso_ultima_clase(usuario):
+    nombre_plan = f' "{usuario.plan.nombre}"' if usuario.plan else ""
+    asunto = "Esta era tu última clase del mes — renová tu plan"
+    cuerpo = f"""
+        <p>Hola {usuario.nombre},</p>
+        <p>Con esta reserva usaste la última clase disponible de tu plan{nombre_plan} para este mes.</p>
+        <p>Para que tu saldo se renueve y puedas seguir reservando, acordate de abonar la cuota
+        con el estudio.</p>
     """
     return _enviar(usuario.email, asunto, cuerpo)
 

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benincasa Pilates — Mejorando vidas, un movimiento a la vez</title>
+    <meta name="description" content="Estudio de pilates reformer con atención personalizada, en grupos de hasta 5 personas. Reservá tu clase online o escribinos por WhatsApp.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+</head>
+<body class="landing">
+
+    <header class="landing-topbar">
+        <div class="envoltura">
+            <span class="logo">
+                <svg width="26" height="26" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="13" cy="15" r="10" stroke="#B3A98C" stroke-width="2"/>
+                    <circle cx="17" cy="15" r="10" stroke="#FBF7EE" stroke-width="2"/>
+                    <line x1="15" y1="4" x2="15" y2="26" stroke="#FBF7EE" stroke-width="1" stroke-dasharray="1.5 2.5"/>
+                </svg>
+                <span>
+                    <span class="marca-eyebrow">Pilates</span>
+                    Benincasa
+                </span>
+            </span>
+            <a href="{{ url_for('auth.login') }}" class="boton-cta boton-cta-primario">Tomar un turno</a>
+        </div>
+    </header>
+
+    <section class="landing-hero">
+        <div class="envoltura">
+            <div class="isotipo-wrap reveal" style="--delay:0s">
+                <svg class="isotipo" width="52" height="52" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="13" cy="15" r="10" stroke="#B3A98C" stroke-width="1.4"/>
+                    <circle cx="17" cy="15" r="10" stroke="#FBF7EE" stroke-width="1.4"/>
+                    <line x1="15" y1="4" x2="15" y2="26" stroke="#FBF7EE" stroke-width="1" stroke-dasharray="1.5 2.5"/>
+                </svg>
+            </div>
+            <span class="eyebrow reveal" style="--delay:.1s">Estudio de pilates reformer</span>
+            <h1 class="reveal" style="--delay:.2s">Benincasa Pilates</h1>
+            <p class="lema reveal" style="--delay:.3s">Mejorando vidas, un movimiento a la vez.</p>
+            <p class="sub reveal" style="--delay:.4s">Te acompañamos de cerca, clase a clase, en un espacio pensado para que cada movimiento se sienta tuyo.</p>
+            <div class="fila-botones reveal" style="--delay:.5s">
+                <a href="{{ url_for('auth.login') }}" class="boton-cta boton-cta-primario">Tomar un turno</a>
+                <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-secundario">Escribinos por WhatsApp</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-seccion claro">
+        <div class="envoltura">
+            <div class="cabecera reveal">
+                <span class="eyebrow">Por qué Benincasa</span>
+                <h2>Atención personalizada, de verdad</h2>
+                <p>Lo que nos distingue no es solo el método — es la manera en que te acompañamos, desde el primer movimiento.</p>
+            </div>
+            <div class="landing-valores">
+                <div class="landing-valor reveal" style="--delay:0s">
+                    <span class="numero">01</span>
+                    <h3>Grupos de hasta 5 personas</h3>
+                    <p>Acá nunca sos un número más: los grupos son chicos a propósito, para que la profe vea cómo te movés y ajuste cada ejercicio a tu cuerpo.</p>
+                </div>
+                <div class="landing-valor reveal" style="--delay:.12s">
+                    <span class="numero">02</span>
+                    <h3>Seguimiento cercano</h3>
+                    <p>Tu plan crece con vos. Te acompañamos clase a clase, no solo el primer día — y eso se nota en cómo te sentís.</p>
+                </div>
+                <div class="landing-valor reveal" style="--delay:.24s">
+                    <span class="numero">03</span>
+                    <h3>Turnos simples, sin vueltas</h3>
+                    <p>Reservar tu lugar te lleva un minuto. Cambiás de día o cancelás cuando lo necesites, sin llamados ni idas y vueltas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-seccion papel">
+        <div class="envoltura">
+            <div class="cabecera reveal">
+                <span class="eyebrow">El equipo</span>
+                <h2>¿Quiénes te reciben?</h2>
+                <p>Un equipo chico, para conocerte de verdad, clase a clase.</p>
+            </div>
+            <div class="landing-equipo">
+                <div class="landing-profe reveal" style="--delay:0s">
+                    <div class="avatar">G</div>
+                    <h3>Gise</h3>
+                    <span class="rol">Directora del estudio</span>
+                </div>
+                <div class="landing-profe reveal" style="--delay:.12s">
+                    <div class="avatar">M</div>
+                    <h3>Mile</h3>
+                    <span class="rol">Instructora de pilates reformer</span>
+                </div>
+                <div class="landing-profe reveal" style="--delay:.24s">
+                    <div class="avatar">A</div>
+                    <h3>Adri</h3>
+                    <span class="rol">Instructora de pilates reformer</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-seccion oscuro landing-contacto">
+        <div class="envoltura">
+            <div class="cabecera reveal">
+                <span class="eyebrow">Empezá hoy</span>
+                <h2>¿Lista/o para tu primera clase?</h2>
+                <p>Contanos qué buscás y te ayudamos a encontrar tu horario ideal.</p>
+            </div>
+            <div class="fila-botones reveal" style="--delay:.1s">
+                <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-primario">
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 20l1.2-3.6A8 8 0 1 1 8.6 19L4 20z"/><path d="M8.5 10.5c.3 1.8 2.2 3.7 4 4"/></svg>WhatsApp
+                </a>
+                <a href="{{ instagram_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-secundario">
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r=".6" fill="currentColor" stroke="none"/></svg>Instagram
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="boton-cta boton-cta-secundario">Tomar un turno</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-seccion claro">
+        <div class="envoltura">
+            <div class="cabecera reveal">
+                <span class="eyebrow">Dónde estamos</span>
+                <h2>Visitanos</h2>
+                <p>{{ direccion }}</p>
+            </div>
+            <div class="landing-mapa reveal">
+                <iframe
+                    src="{{ mapa_embed_url }}"
+                    width="100%" height="100%" style="border:0;"
+                    allowfullscreen loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    title="Ubicación de Benincasa Pilates en Google Maps">
+                </iframe>
+            </div>
+            <div class="fila-botones" style="justify-content:center; margin-top:1.5rem;">
+                <a href="{{ mapa_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-secundario-claro">Cómo llegar</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-seccion papel">
+        <div class="envoltura">
+            <div class="cabecera reveal">
+                <span class="eyebrow">Reseñas</span>
+                <h2>Lo que dicen de nosotras/os</h2>
+                <p class="landing-estrellas">★★★★★ <span>5.0 en Google Maps</span></p>
+            </div>
+            <div class="landing-resenas">
+                <div class="landing-resena reveal" style="--delay:0s">
+                    <p class="landing-estrellas">★★★★★</p>
+                    <p class="texto">"Me encanta el lugar, las profes unas divinas, muy atentas a todos. Pocas personas, y así se hacen más supervisados los ejercicios que te dan, sobre todo cuando no tenés experiencia."</p>
+                    <span class="autor">Mónica Sosa</span>
+                </div>
+                <div class="landing-resena reveal" style="--delay:.08s">
+                    <p class="landing-estrellas">★★★★★</p>
+                    <p class="texto">"Excelente lugar, profesionalismo, grandes profesionales."</p>
+                    <span class="autor">Lina Maria Mangones Cuello</span>
+                </div>
+                <div class="landing-resena reveal" style="--delay:.16s">
+                    <p class="landing-estrellas">★★★★★</p>
+                    <p class="texto">"Hermoso y cálido lugar. Excelente profesionales."</p>
+                    <span class="autor">Silvina Elisabet</span>
+                </div>
+                <div class="landing-resena reveal" style="--delay:.24s">
+                    <p class="landing-estrellas">★★★★★</p>
+                    <p class="texto">"Clases muy llevaderas y adaptadas a cada alumno. Muy recomendable."</p>
+                    <span class="autor">Tobías</span>
+                </div>
+            </div>
+            <div class="fila-botones" style="justify-content:center; margin-top:2rem;">
+                <a href="{{ mapa_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-secundario-claro">Ver todas las reseñas en Google Maps</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="landing-footer">
+        <div class="envoltura">
+            <span>Pilates Benincasa</span>
+            <span class="enlaces">
+                <a href="{{ whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+                <a href="{{ instagram_url }}" target="_blank" rel="noopener">Instagram</a>
+                <a href="{{ mapa_url }}" target="_blank" rel="noopener">Cómo llegar</a>
+                <a href="{{ url_for('auth.login') }}">Ya soy alumna/o →</a>
+            </span>
+        </div>
+    </footer>
+
+    <script>
+        // Animación de entrada: los elementos con clase "reveal" empiezan
+        // invisibles/corridos (ver landing.css) y se muestran suavemente
+        // cuando entran en pantalla. Si la persona prefiere menos
+        // movimiento, o el navegador no soporta IntersectionObserver,
+        // mostramos todo directo, sin animar nada.
+        (function () {
+            var elementos = document.querySelectorAll('.reveal');
+            var sinAnimacion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            if (sinAnimacion || !('IntersectionObserver' in window)) {
+                elementos.forEach(function (el) { el.classList.add('visible'); });
+                return;
+            }
+
+            var observador = new IntersectionObserver(function (entradas) {
+                entradas.forEach(function (entrada) {
+                    if (entrada.isIntersecting) {
+                        entrada.target.classList.add('visible');
+                        observador.unobserve(entrada.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+
+            elementos.forEach(function (el) { observador.observe(el); });
+        })();
+    </script>
+
+</body>
+</html>

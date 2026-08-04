@@ -88,6 +88,15 @@ class Config:
     MAIL_REMITENTE = os.environ.get("MAIL_REMITENTE", MAIL_USUARIO)
     MAIL_HABILITADO = bool(MAIL_USUARIO and MAIL_PASSWORD)
 
+    # --- Redes y contacto del estudio (landing page) ---
+    # WHATSAPP_NUMERO: formato wa.me, sin "+" ni espacios (código de
+    # país + código de área sin el 0 + número sin el 15).
+    WHATSAPP_NUMERO = os.environ.get("WHATSAPP_NUMERO", "5491137723875")
+    INSTAGRAM_URL = os.environ.get("INSTAGRAM_URL", "https://www.instagram.com/benincasapilates/")
+    DIRECCION_ESTUDIO = os.environ.get(
+        "DIRECCION_ESTUDIO", "Campana 1495, Villa Santa Rita, CABA, Argentina"
+    )
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

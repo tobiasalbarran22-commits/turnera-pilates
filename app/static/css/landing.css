@@ -1,0 +1,424 @@
+/* ============================================================
+   LANDING — Benincasa Pilates
+   Extiende la paleta y tipografía de estilos.css (mismas variables
+   :root), pero se arma aparte porque esta página no usa el layout
+   operativo de la app (navbar de alumno/admin, .contenedor angosto):
+   acá el objetivo es una página de una sola pantalla larga, de
+   presentación, con secciones a todo el ancho.
+   ============================================================ */
+
+* { box-sizing: border-box; }
+
+body.landing {
+    margin: 0;
+    font-family: var(--f-body);
+    color: var(--ink);
+    background: var(--stone);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    /* Red de seguridad: ninguna sección de esta página debería generar
+       scroll horizontal, pero si algún elemento se pasa por un pixel
+       en una pantalla muy angosta, que no arrastre a toda la página. */
+    overflow-x: hidden;
+}
+
+.landing .envoltura {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+/* ---------- Barra superior fija ---------- */
+.landing-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--ink);
+    color: var(--paper);
+    border-bottom: 1px solid rgba(251, 247, 238, .14);
+}
+.landing-topbar .envoltura {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem 1rem;
+    padding-top: .8rem;
+    padding-bottom: .8rem;
+}
+.landing-topbar .logo {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    font-family: var(--f-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.landing-topbar .logo .marca-eyebrow {
+    display: block;
+    font-family: var(--f-mono);
+    font-size: .58rem;
+    letter-spacing: .18em;
+    color: rgba(251, 247, 238, .55);
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+/* ---------- Botones ---------- */
+.landing .boton-cta {
+    display: inline-block;
+    font-family: var(--f-body);
+    font-weight: 600;
+    font-size: .92rem;
+    padding: .75rem 1.5rem;
+    border-radius: 3px;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
+    white-space: nowrap;
+}
+.boton-cta-primario {
+    background: var(--paper);
+    color: var(--ink);
+}
+.boton-cta-primario:hover { background: var(--stone); transform: translateY(-1px); }
+
+.boton-cta-secundario {
+    background: transparent;
+    color: var(--paper);
+    border-color: rgba(251, 247, 238, .5);
+}
+.boton-cta-secundario:hover { border-color: var(--paper); transform: translateY(-1px); }
+
+/* Variantes para usar sobre fondo claro (secciones fuera del hero) */
+.boton-cta-primario-claro {
+    background: var(--ink);
+    color: var(--paper);
+}
+.boton-cta-primario-claro:hover { background: var(--ink-soft); transform: translateY(-1px); }
+
+.boton-cta-secundario-claro {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--line);
+}
+.boton-cta-secundario-claro:hover { border-color: var(--ink); transform: translateY(-1px); }
+
+.landing .fila-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .9rem;
+    align-items: center;
+}
+
+/* ---------- Animación de entrada ("reveal") ----------
+   Todo elemento con esta clase arranca invisible y corrido hacia
+   abajo; el script al final de landing.html le agrega ".visible"
+   cuando entra en pantalla (o de una, si el navegador no soporta
+   IntersectionObserver o la persona prefiere menos movimiento - ver
+   el @media de más abajo). El --delay por elemento (inline en el
+   HTML) es lo que arma la cascada dentro de cada grupo. */
+.reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity .8s ease, transform .8s ease;
+    transition-delay: var(--delay, 0s);
+}
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ---------- Hero ---------- */
+.landing-hero {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 5.5rem 0 6rem;
+    text-align: center;
+}
+.landing-hero .isotipo-wrap {
+    margin: 0 auto 1.75rem;
+    width: 52px;
+}
+.landing-hero .isotipo {
+    display: block;
+    /* La "respiración" (transform: scale) vive en el SVG interno, no
+       en .isotipo-wrap: ese ya usa transform para la animación de
+       entrada (translateY), y una sola propiedad no puede animarse
+       con dos mecanismos distintos (transition + animation) a la vez
+       sin que se pisen entre sí. */
+    animation: respirar 4.5s ease-in-out infinite;
+    animation-delay: 1.2s;
+}
+@keyframes respirar {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+}
+.landing-hero .eyebrow {
+    font-family: var(--f-mono);
+    font-size: .72rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--sage-tint);
+    opacity: .8;
+    display: block;
+    margin-bottom: 1rem;
+}
+.landing-hero h1 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    margin: 0 auto .9rem;
+    max-width: 20ch;
+}
+.landing-hero .lema {
+    font-family: var(--f-display);
+    font-style: italic;
+    font-size: clamp(1.05rem, 2vw, 1.3rem);
+    color: var(--sage-tint);
+    margin: 0 auto 1.4rem;
+}
+.landing-hero .sub {
+    font-size: 1.02rem;
+    color: rgba(251, 247, 238, .78);
+    max-width: 46ch;
+    margin: 0 auto 2.2rem;
+}
+.landing-hero .fila-botones { justify-content: center; }
+
+/* ---------- Secciones generales ---------- */
+.landing-seccion {
+    padding: 4.5rem 0;
+}
+.landing-seccion.claro { background: var(--stone); }
+.landing-seccion.papel { background: var(--paper); }
+.landing-seccion.oscuro { background: var(--ink); color: var(--paper); }
+
+.landing-seccion .cabecera {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 3rem;
+}
+.landing-seccion .eyebrow {
+    display: block;
+    font-family: var(--f-mono);
+    font-size: .7rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: .6rem;
+}
+.landing-seccion.oscuro .eyebrow { color: var(--sage-tint); opacity: .85; }
+.landing-seccion h2 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    margin: 0 0 .6rem;
+    letter-spacing: -0.01em;
+}
+.landing-seccion .cabecera p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 1rem;
+}
+.landing-seccion.oscuro .cabecera p { color: rgba(251, 247, 238, .75); }
+
+/* ---------- Valores / diferenciales ---------- */
+.landing-valores {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+.landing-valor {
+    background: var(--paper);
+    border-radius: 4px;
+    padding: 2rem 1.75rem;
+    box-shadow: 0 1px 2px rgba(27, 25, 18, .08), 0 0 0 1px var(--line-soft);
+    text-align: left;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.landing-valor:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(27, 25, 18, .1), 0 0 0 1px var(--line-soft);
+}
+.landing-valor .numero {
+    font-family: var(--f-mono);
+    font-size: .78rem;
+    letter-spacing: .1em;
+    color: var(--clay);
+    display: block;
+    margin-bottom: .9rem;
+}
+.landing-valor h3 {
+    font-family: var(--f-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 .5rem;
+}
+.landing-valor p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .92rem;
+    line-height: 1.55;
+}
+
+/* ---------- Equipo ---------- */
+.landing-equipo {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+}
+.landing-profe {
+    text-align: center;
+}
+.landing-profe .avatar {
+    width: 108px;
+    height: 108px;
+    margin: 0 auto 1.1rem;
+    border-radius: 50%;
+    background: var(--sage-tint);
+    color: var(--sage-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--f-display);
+    font-size: 2.1rem;
+    font-weight: 600;
+    position: relative;
+    box-shadow: 0 0 0 1px var(--line-soft), 0 4px 14px rgba(27, 25, 18, .1);
+    transition: transform .2s ease;
+}
+.landing-profe:hover .avatar { transform: translateY(-4px); }
+.landing-profe .avatar::after {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+}
+.landing-profe h3 {
+    font-family: var(--f-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 .3rem;
+}
+.landing-profe .rol {
+    font-family: var(--f-mono);
+    font-size: .74rem;
+    letter-spacing: .06em;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+/* ---------- Contacto / CTA final ---------- */
+.landing-contacto {
+    text-align: center;
+}
+.landing-contacto .fila-botones { justify-content: center; margin-top: .5rem; }
+.landing-contacto .icono {
+    width: 18px;
+    height: 18px;
+    vertical-align: -3px;
+    margin-right: .5rem;
+}
+
+/* ---------- Ubicación / mapa ---------- */
+.landing-mapa {
+    width: 100%;
+    aspect-ratio: 16 / 7;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(27, 25, 18, .08), 0 0 0 1px var(--line-soft);
+}
+
+/* ---------- Estrellas ---------- */
+.landing-estrellas {
+    color: var(--warn);
+    letter-spacing: .12em;
+    font-size: 1rem;
+}
+.landing-estrellas span {
+    color: var(--muted);
+    letter-spacing: normal;
+    font-family: var(--f-mono);
+    font-size: .78rem;
+    margin-left: .5rem;
+}
+
+/* ---------- Reseñas ---------- */
+.landing-resenas {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+.landing-resena {
+    background: var(--stone);
+    border-radius: 4px;
+    padding: 1.75rem;
+    box-shadow: 0 1px 2px rgba(27, 25, 18, .08), 0 0 0 1px var(--line-soft);
+}
+.landing-resena .landing-estrellas { margin-bottom: .8rem; font-size: .85rem; }
+.landing-resena .texto {
+    font-family: var(--f-display);
+    font-style: italic;
+    font-size: 1.02rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin: 0 0 1rem;
+}
+.landing-resena .autor {
+    font-family: var(--f-mono);
+    font-size: .74rem;
+    letter-spacing: .04em;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+/* ---------- Footer ---------- */
+.landing-footer {
+    background: var(--ink);
+    color: rgba(251, 247, 238, .6);
+    padding: 2rem 0;
+    text-align: center;
+    font-size: .8rem;
+    border-top: 1px solid rgba(251, 247, 238, .12);
+}
+.landing-footer .envoltura {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    align-items: center;
+}
+.landing-footer a {
+    color: var(--paper);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(251, 247, 238, .35);
+}
+.landing-footer a:hover { border-color: var(--paper); }
+.landing-footer .enlaces { display: flex; gap: 1.25rem; flex-wrap: wrap; justify-content: center; }
+
+@media (max-width: 780px) {
+    .landing-valores, .landing-equipo, .landing-resenas { grid-template-columns: 1fr; }
+    .landing-hero { padding: 4rem 0 4.5rem; }
+    .landing-seccion { padding: 3.5rem 0; }
+    .landing-mapa { aspect-ratio: 4 / 5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing .boton-cta,
+    .landing-valor,
+    .landing-profe .avatar { transition: none; }
+    .landing-hero .isotipo { animation: none; }
+    .reveal {
+        /* El script también detecta esta preferencia y agrega
+           ".visible" directo (ver landing.html), pero lo dejamos
+           resuelto acá también por si el JS no llegó a correr. */
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}

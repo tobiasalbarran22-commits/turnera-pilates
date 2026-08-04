@@ -6,6 +6,15 @@ from app.auth.forms import LoginForm, CambiarPasswordForm
 from app.extensions import db
 from app.models import Usuario
 
+# Cookie que marca "esta persona ya inició sesión alguna vez" - la lee
+# la ruta raíz (ver app/__init__.py: index) para mandar directo al
+# login a quien ya es alumna/o, en vez de mostrarle de nuevo la landing
+# de bienvenida cada vez que entra (con la sesión vencida, desde otro
+# dispositivo, etc.). Dura 2 años: no es información sensible, solo
+# ahorra un clic.
+COOKIE_YA_ALUMNO = "ya_alumno"
+COOKIE_YA_ALUMNO_DURACION_SEGUNDOS = 60 * 60 * 24 * 365 * 2
+
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -32,7 +41,14 @@ def login():
             return redirect(url_for("auth.login"))
 
         login_user(usuario, remember=form.recordarme.data)
-        return redirect(url_for("auth.redirigir_segun_rol"))
+
+        respuesta = redirect(url_for("auth.redirigir_segun_rol"))
+        respuesta.set_cookie(
+            COOKIE_YA_ALUMNO, "1",
+            max_age=COOKIE_YA_ALUMNO_DURACION_SEGUNDOS,
+            samesite="Lax",
+        )
+        return respuesta
 
     return render_template("auth/login.html", form=form)
 

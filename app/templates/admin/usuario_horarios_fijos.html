@@ -26,7 +26,8 @@
             <div class="horario-fila">
                 <span class="horario-hora">{{ h.hora.strftime('%H:%M') }} hs</span>
                 {% if h.id in asignados_ids %}
-                    <form method="POST" style="display:inline;">
+                    <form method="POST" style="display:inline;"
+                          onsubmit='return confirm({{ ("¿Quitar a " ~ usuario.nombre_completo ~ " de este horario fijo? Se le van a cancelar los turnos futuros que ya tenía para este día/horario.")|tojson }});'>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="horario_id" value="{{ h.id }}">
                         <input type="hidden" name="accion" value="quitar">

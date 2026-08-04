@@ -13,13 +13,52 @@
 
 {% if not clases %}
 <div class="tarjeta"><p style="color:var(--muted); margin:0;">No hay clases programadas este día.</p></div>
+{% elif clases|rejectattr("cancelada")|list %}
+<div class="tarjeta fila">
+    <p style="margin:0; color:var(--muted);">¿Feriado o el estudio no abre este día?</p>
+    {% set mensaje_dia = "¿Cancelar TODAS las clases del " ~ fecha.strftime('%d/%m') ~ "?" %}
+    {% if afectados_del_dia %}
+        {% set mensaje_dia = mensaje_dia ~ " Afecta a " ~ afectados_del_dia|length ~ " alumno(s): " ~ (afectados_del_dia|map(attribute="nombre_completo")|join(", ")) ~ "." %}
+    {% else %}
+        {% set mensaje_dia = mensaje_dia ~ " Todavía no tienen alumnos anotados." %}
+    {% endif %}
+    {% set mensaje_dia = mensaje_dia ~ "\n\nSe les va a avisar por mail y se les va a acreditar una clase para recuperar a cada uno (sin el tope habitual de clases para recuperar, ya que la cancelación es del estudio y no de ellos), para que elijan otro día dentro de este mes.\n\n¿Confirmás la cancelación de todo el día?" %}
+    <form method="POST" action="{{ url_for('admin.clases_cancelar_dia') }}" onsubmit='return confirm({{ mensaje_dia|tojson }});'>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="fecha" value="{{ fecha.isoformat() }}">
+        <button type="submit" style="background:none; border:1px solid var(--clay); color:var(--clay); margin:0; padding:.4rem 1rem; font-weight:500;">Cancelar todas las clases del día</button>
+    </form>
+</div>
 {% endif %}
 
 {% for c in clases %}
 <div class="tarjeta">
     <div class="fila" style="margin-bottom:.75rem;">
-        <span class="horario-hora">{{ c.hora_inicio.strftime('%H:%M') }} hs</span>
-        <span class="horario-cupo">{{ c.cupos_ocupados }} / {{ c.cupo_maximo }} camillas ocupadas{{ " — CANCELADA" if c.cancelada else "" }}</span>
+        <div>
+            <span class="horario-hora">{{ c.hora_inicio.strftime('%H:%M') }} hs</span>
+            <span class="horario-cupo">&nbsp;&nbsp;{{ c.cupos_ocupados }} / {{ c.cupo_maximo }} camillas ocupadas{{ " — CANCELADA" if c.cancelada else "" }}</span>
+        </div>
+        {% if not c.cancelada %}
+            {% set nombres_afectados = c.reservas_activas|map(attribute="usuario")|map(attribute="nombre_completo")|join(", ") %}
+            {% set mensaje_confirmacion = "¿Cancelar la clase de las " ~ c.hora_inicio.strftime('%H:%M') ~ "hs?" %}
+            {% if c.reservas_activas %}
+                {% set mensaje_confirmacion = mensaje_confirmacion ~ " Afecta a " ~ c.reservas_activas|length ~ " alumno(s): " ~ nombres_afectados ~ "." %}
+            {% else %}
+                {% set mensaje_confirmacion = mensaje_confirmacion ~ " Todavía no tiene alumnos anotados." %}
+            {% endif %}
+            {% set mensaje_confirmacion = mensaje_confirmacion ~ "\n\nSe les va a avisar por mail y se les va a acreditar una clase para recuperar (sin el tope habitual de clases para recuperar, ya que la cancelación es del estudio y no de ellos), para que elijan otro día dentro de este mes.\n\n¿Confirmás la cancelación?" %}
+            <form method="POST" action="{{ url_for('admin.clase_cancelar', clase_id=c.id) }}"
+                  onsubmit='return confirm({{ mensaje_confirmacion|tojson }});'>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" style="background:none; border:1px solid var(--clay); color:var(--clay); margin:0; padding:.4rem 1rem; font-weight:500;">Cancelar clase</button>
+            </form>
+        {% else %}
+            <form method="POST" action="{{ url_for('admin.clase_reactivar', clase_id=c.id) }}"
+                  onsubmit="return confirm('¿Reactivar la clase de las {{ c.hora_inicio.strftime('%H:%M') }}hs? Va a quedar disponible para reservar de nuevo.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="boton" style="margin:0;">Reactivar clase</button>
+            </form>
+        {% endif %}
     </div>
 
     {% if not c.reservas_activas %}
