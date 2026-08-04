@@ -27,7 +27,10 @@
             </span>
         </a>
         {% if current_user.is_authenticated %}
-            <nav>
+            <button type="button" class="navbar-toggle" id="navbar-toggle" aria-expanded="false" aria-controls="navbar-nav" aria-label="Abrir menú">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <nav id="navbar-nav">
                 {% if not current_user.es_admin %}
                     <a href="{{ url_for('alumno.calendario') }}">Calendario</a>
                     <a href="{{ url_for('alumno.mis_turnos') }}">Mis turnos</a>
@@ -54,5 +57,29 @@
 
         {% block content %}{% endblock %}
     </main>
+
+    <script>
+        // Menú hamburguesa de la navbar (solo se ve en mobile, ver
+        // estilos.css): abre y cierra el nav, y se cierra solo al
+        // tocar un link (para no dejarlo tapando la página siguiente).
+        (function () {
+            var boton = document.getElementById('navbar-toggle');
+            var nav = document.getElementById('navbar-nav');
+            if (!boton || !nav) return;
+
+            boton.addEventListener('click', function () {
+                var abierto = nav.classList.toggle('abierta');
+                boton.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+            });
+
+            nav.addEventListener('click', function (evento) {
+                if (evento.target.tagName === 'A') {
+                    nav.classList.remove('abierta');
+                    boton.setAttribute('aria-expanded', 'false');
+                }
+            });
+        })();
+    </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

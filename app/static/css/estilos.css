@@ -115,6 +115,15 @@ a:hover { text-decoration-color: currentColor; }
     transition: border-color .15s ease;
 }
 .navbar a:hover { border-color: rgba(251, 247, 238, .6); }
+.navbar-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--paper);
+    cursor: pointer;
+    padding: .3rem;
+    line-height: 0;
+}
 
 /* ---------- Layout ---------- */
 .contenedor { max-width: 920px; margin: 2.5rem auto; padding: 0 1.25rem; }
@@ -311,7 +320,18 @@ td { padding: .6rem .5rem; border-bottom: 1px solid var(--line-soft); white-spac
 
 @media (max-width: 640px) {
     .navbar { padding: .85rem 1.1rem; flex-wrap: wrap; gap: .5rem; }
-    .navbar nav { gap: .5rem 1rem; }
+    .navbar-toggle { display: inline-flex; }
+    .navbar nav {
+        display: none;
+        flex-basis: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .85rem;
+        margin-top: .75rem;
+        padding-top: .75rem;
+        border-top: 1px solid rgba(251, 247, 238, .16);
+    }
+    .navbar nav.abierta { display: flex; }
     .contenedor { margin: 1.5rem auto; }
     h1 { font-size: 1.6rem; }
     .tarjeta { padding: 1.25rem; }
@@ -348,6 +368,35 @@ td { padding: .6rem .5rem; border-bottom: 1px solid var(--line-soft); white-spac
         color: var(--muted);
         margin-bottom: .1rem;
     }
+
+    /* Filas colapsables: por default solo se ve el nombre (con la
+       flechita), para que la lista no ocupe toda la pantalla. Tocar
+       el nombre agrega la clase "expandida" (ver JS de la página) y
+       recién ahí se muestran el resto de las columnas. */
+    .tabla-responsive tr td:not(:first-child) { display: none; }
+    .tabla-responsive tr.expandida td:not(:first-child) { display: block; }
+    .tabla-responsive tr td:first-child::before { display: none; }
+    .fila-toggle {
+        display: flex;
+        align-items: baseline;
+        gap: .45rem;
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        font-weight: 600;
+        color: var(--ink);
+        cursor: pointer;
+        text-align: left;
+    }
+    .fila-toggle-flecha {
+        display: inline-block;
+        font-size: .75em;
+        color: var(--muted);
+        transition: transform .15s ease;
+    }
+    tr.expandida .fila-toggle-flecha { transform: rotate(90deg); }
 }
 
 @media (max-width: 400px) {

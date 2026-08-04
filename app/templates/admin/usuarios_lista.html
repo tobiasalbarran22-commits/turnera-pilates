@@ -35,7 +35,11 @@
         <tbody>
             {% for u in usuarios %}
             <tr style="border-bottom: 1px solid var(--line-soft); {{ 'opacity:.5;' if not u.activo }}">
-                <td data-label="Nombre" style="padding:.5rem;">{{ u.nombre_completo }}</td>
+                <td data-label="Nombre" style="padding:.5rem;">
+                    <button type="button" class="fila-toggle" aria-expanded="false">
+                        <span class="fila-toggle-flecha">▸</span> {{ u.nombre_completo }}
+                    </button>
+                </td>
                 <td data-label="Email" style="padding:.5rem;">{{ u.email }}</td>
                 <td data-label="Rol" style="padding:.5rem;">{{ "Admin" if u.es_admin else "Alumno" }}</td>
                 <td data-label="Modalidad" style="padding:.5rem;">{{ "Fijo" if u.es_fijo else "Libre" if not u.es_admin else "—" }}</td>
@@ -78,4 +82,23 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Cada fila de la tabla arranca colapsada en mobile (ver
+    // estilos.css: .tabla-responsive tr no tiene la clase
+    // "expandida"), mostrando solo el nombre - así la lista no ocupa
+    // toda la pantalla. Tocar el nombre despliega el resto de los
+    // datos y las acciones (Editar, Horarios fijos, etc.) de esa fila.
+    (function () {
+        document.querySelectorAll('.fila-toggle').forEach(function (boton) {
+            boton.addEventListener('click', function () {
+                var fila = boton.closest('tr');
+                var expandida = fila.classList.toggle('expandida');
+                boton.setAttribute('aria-expanded', expandida ? 'true' : 'false');
+            });
+        });
+    })();
+</script>
 {% endblock %}
