@@ -73,7 +73,39 @@
             var elementos = document.querySelectorAll('.reveal');
             var sinAnimacion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+            // Efecto "máquina de escribir": agrega el texto de a un
+            // caracter por vez (en vez de animar un "width" en CSS,
+            // que solo funciona si el texto entra en una sola línea -
+            // así ajusta a 2 líneas solo si hace falta, en cualquier
+            // ancho de pantalla). El texto completo ya está en el
+            // <span data-escribir> desde el servidor (ver hero.html);
+            // esta función lo vacía y lo reconstruye letra a letra.
+            function escribir(span) {
+                var texto = span.textContent;
+                var i = 0;
+                span.textContent = '';
+                span.classList.add('escribiendo');
+                (function siguiente() {
+                    span.textContent = texto.slice(0, i);
+                    i++;
+                    if (i <= texto.length) {
+                        setTimeout(siguiente, 45);
+                    } else {
+                        setTimeout(function () { span.classList.remove('escribiendo'); }, 2500);
+                    }
+                })();
+            }
+
+            function activar(el) {
+                el.classList.add('visible');
+                var span = el.querySelector('[data-escribir]');
+                if (span) escribir(span);
+            }
+
             if (sinAnimacion || !('IntersectionObserver' in window)) {
+                // Con movimiento reducido, el texto ya está completo
+                // en el HTML de entrada - solo hace falta mostrarlo,
+                // nunca corremos escribir().
                 elementos.forEach(function (el) { el.classList.add('visible'); });
                 return;
             }
@@ -81,7 +113,7 @@
             var observador = new IntersectionObserver(function (entradas) {
                 entradas.forEach(function (entrada) {
                     if (entrada.isIntersecting) {
-                        entrada.target.classList.add('visible');
+                        activar(entrada.target);
                         observador.unobserve(entrada.target);
                     }
                 });

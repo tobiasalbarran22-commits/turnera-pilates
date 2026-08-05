@@ -48,7 +48,7 @@ body.landing {
        lo que queda debajo se ve difuminado detrás de la barra en vez
        de tapado de golpe - una barra "de vidrio" en vez de una placa
        opaca (mismo recurso que usa Erika Bloom en su nav fija). */
-    background: rgba(31, 38, 32, .62);
+    background: rgba(27, 34, 51, .62);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     color: var(--paper);
@@ -267,28 +267,27 @@ body.landing {
 /* Efecto "máquina de escribir": el lema se escribe letra a letra con
    un cursor parpadeando, en vez de aparecer entero de una - un guiño
    sutil de movimiento (visto en East River Pilates) que le da vida
-   al hero sin caer en algo exagerado. Solo arranca cuando el propio
-   sistema de "reveal" agrega ".visible" (ver el <script> de
-   base_publica.html), así el reloj de la animación no corre mientras
-   el texto todavía está invisible. 40 caracteres = el largo exacto de
-   "Mejorando vidas, un movimiento a la vez." */
-.landing-hero .lema.reveal {
+   al hero sin caer en algo exagerado. A diferencia de la primera
+   versión (un solo <keyframes> animando "width" en "ch", que asumía
+   una sola línea y se cortaba en mobile), esto lo maneja JS
+   agregando caracteres de a uno al span de adentro - así el texto
+   ajusta a 2 líneas solo si hace falta, en cualquier tamaño de
+   pantalla, sin cortarse nunca (ver el <script> de base_publica.html
+   para la lógica). El span interno lleva aria-hidden porque el <p>
+   que lo contiene ya tiene el texto completo en su aria-label - así
+   quien usa lector de pantalla siempre escucha la frase entera, sin
+   importar en qué momento de la animación esté. */
+.landing-hero .lema-texto.escribiendo::after {
+    content: "";
     display: inline-block;
-    overflow: hidden;
-    white-space: nowrap;
-    width: 0;
-    border-right: 2px solid var(--sage-tint);
-    vertical-align: bottom;
+    width: 2px;
+    height: 1em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background: var(--sage-tint);
+    animation: parpadeo-cursor .8s step-end infinite;
 }
-.landing-hero .lema.reveal.visible {
-    animation:
-        escribir-lema 1.8s steps(40, end) forwards,
-        parpadeo-cursor .8s step-end 5 1.8s,
-        ocultar-cursor .3s ease forwards 5.8s;
-}
-@keyframes escribir-lema { to { width: 40ch; } }
-@keyframes parpadeo-cursor { 0%, 100% { border-color: var(--sage-tint); } 50% { border-color: transparent; } }
-@keyframes ocultar-cursor { to { border-color: transparent; } }
+@keyframes parpadeo-cursor { 50% { opacity: 0; } }
 .landing-hero .sub {
     font-size: 1.02rem;
     color: rgba(251, 247, 238, .78);
@@ -660,25 +659,6 @@ body.landing {
     /* Deja lugar abajo para que el botón flotante no tape el último
        link del footer en pantallas angostas (ver .boton-flotante). */
     .landing-footer { padding-bottom: 4.5rem; }
-
-    /* El efecto de máquina de escribir asume que el lema entra en una
-       sola línea (40ch ≈ 400-450px según tamaño de fuente) - en
-       pantallas angostas eso es más ancho que el propio viewport, y
-       el texto queda cortado en vez de centrado. Acá abajo el lema
-       vuelve a comportarse como un párrafo normal: se ve entero,
-       centrado, ajustándose a 2 líneas si hace falta. El selector
-       repite ".visible" para empatar la especificidad de la regla que
-       dispara la animación (ver más arriba) - si no, esta regla
-       pierde el empate y la animación se aplica igual. */
-    .landing-hero .lema.reveal,
-    .landing-hero .lema.reveal.visible {
-        display: block;
-        width: auto;
-        overflow: visible;
-        white-space: normal;
-        border-right: none;
-        animation: none;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -698,18 +678,9 @@ body.landing {
         transform: none;
         transition: none;
     }
-    /* El lema tiene que mostrarse entero de una, sin el efecto de
-       máquina de escribir ni el cursor. Repetimos el selector con
-       ".visible" incluido (no solo ".reveal") porque esa es la regla
-       que efectivamente dispara la animación, y tiene una clase más
-       en el selector - sin igualar esa especificidad, esta regla
-       pierde el empate y la animación se aplica igual. */
-    .landing-hero .lema.reveal,
-    .landing-hero .lema.reveal.visible {
-        width: auto;
-        overflow: visible;
-        white-space: normal;
-        border-right: none;
-        animation: none;
-    }
+    /* El cursor parpadeante también se apaga - el script detecta esta
+       misma preferencia y directamente no anima el tipeo (ver
+       base_publica.html), así que ".escribiendo" nunca se llega a
+       agregar, pero lo dejamos resuelto acá también por las dudas. */
+    .landing-hero .lema-texto.escribiendo::after { animation: none; display: none; }
 }

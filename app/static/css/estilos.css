@@ -14,28 +14,27 @@
    ============================================================ */
 
 :root {
-    /* ---- Base: verde botánico oscuro + crema ----
-       Antes esta base era un negro con fondo cálido (marrón). Se
-       pasó a un verde botánico muy oscuro (casi negro a primera
-       vista) para reforzar la idea de calma/naturaleza sin perder
-       la seriedad del original - todo lo demás del sistema
-       (jerarquía, contraste, dónde se usa cada tono) se mantiene
-       igual, solo cambió el matiz. */
-    --ink:        #1F2620;   /* texto principal, botones, navbar */
-    --ink-soft:   #333D31;   /* verde suavizado, hover de botones oscuros */
+    /* ---- Base: azul medianoche + crema ----
+       Primero se probó un verde botánico oscuro; ahora la base pasó
+       a un azul medianoche - frío, confiable, muy usado en marcas de
+       spa/wellness premium. El resto del sistema (jerarquía,
+       contraste, dónde se usa cada tono) se mantiene igual, solo
+       cambió el matiz. */
+    --ink:        #1B2233;   /* texto principal, botones, navbar */
+    --ink-soft:   #2B3550;   /* azul suavizado, hover de botones oscuros */
     --stone:      #EFE6D2;   /* fondo general, crema cálido */
     --paper:      #FBF7EE;   /* superficie de tarjetas, crema claro */
     --line:       #D9CFB4;   /* líneas divisorias */
     --line-soft:  #ECE4CF;
     --muted:      #6E6754;   /* texto secundario */
 
-    /* ---- Acento neutro ("verde salvia") ----
+    /* ---- Acento neutro ("azul pizarra") ----
        Tono intermedio para dar jerarquía a eyebrows, breadcrumbs,
        cifras destacadas y enlaces de acción neutra (editar,
-       reactivar), coherente con el verde botánico de --ink. */
-    --sage:       #4F5C46;
-    --sage-deep:  #2A3325;
-    --sage-tint:  #E4E8D9;
+       reactivar), coherente con el azul medianoche de --ink. */
+    --sage:       #3E4A63;
+    --sage-deep:  #232C40;
+    --sage-tint:  #DCE1EA;
 
     /* ---- Único acento de color: alertas y acciones destructivas ---- */
     --clay:       #9C4A32;   /* error / eliminar / sin cupo */
