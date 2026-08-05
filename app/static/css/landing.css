@@ -112,6 +112,7 @@ body.landing {
    logo, así que no hace falta. */
 .landing-nav-toggle {
     display: none;
+    margin: 0; /* pisa el "button { margin-top: 1.4rem }" de estilos.css (pensado para botones de formulario) - sin esto, el ícono queda empujado hacia abajo y desalineado con el logo */
     background: none;
     border: none;
     color: var(--ink);
