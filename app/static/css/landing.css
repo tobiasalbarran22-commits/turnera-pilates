@@ -48,9 +48,9 @@ body.landing {
        lo que queda debajo se ve difuminado detrás de la barra en vez
        de tapado de golpe - una barra "de vidrio" en vez de una placa
        opaca (mismo recurso que usa Erika Bloom en su nav fija). */
-    background: rgba(27, 25, 18, .92);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(27, 25, 18, .62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     color: var(--paper);
     border-bottom: 1px solid rgba(251, 247, 238, .14);
 }
@@ -64,23 +64,11 @@ body.landing {
     padding-bottom: .8rem;
 }
 .landing-topbar .logo {
-    display: flex;
-    align-items: center;
-    gap: .55rem;
     font-family: var(--f-display);
     font-size: 1.1rem;
     font-weight: 600;
     text-decoration: none;
     color: inherit; /* pisa el "a { color: var(--sage-deep) }" global: ahora que el logo es un link a home, tiene que seguir viéndose blanco/crema sobre el fondo oscuro */
-}
-.landing-topbar .logo .marca-eyebrow {
-    display: block;
-    font-family: var(--f-mono);
-    font-size: .58rem;
-    letter-spacing: .18em;
-    color: rgba(251, 247, 238, .55);
-    text-transform: uppercase;
-    line-height: 1;
 }
 
 /* Nav de la landing (arriba a la derecha): son anclas a secciones de
@@ -250,24 +238,6 @@ body.landing {
 .landing-hero .envoltura {
     width: 100%;
 }
-.landing-hero .isotipo-wrap {
-    margin: 0 auto 1.75rem;
-    width: 52px;
-}
-.landing-hero .isotipo {
-    display: block;
-    /* La "respiración" (transform: scale) vive en el SVG interno, no
-       en .isotipo-wrap: ese ya usa transform para la animación de
-       entrada (translateY), y una sola propiedad no puede animarse
-       con dos mecanismos distintos (transition + animation) a la vez
-       sin que se pisen entre sí. */
-    animation: respirar 4.5s ease-in-out infinite;
-    animation-delay: 1.2s;
-}
-@keyframes respirar {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.06); }
-}
 .landing-hero .eyebrow {
     font-family: var(--f-mono);
     font-size: .72rem;
@@ -368,14 +338,6 @@ body.landing {
 .landing-frase .envoltura {
     max-width: 720px;
     text-align: center;
-}
-.landing-frase .isotipo-wrap {
-    margin: 0 auto 1.75rem;
-    width: 34px;
-}
-.landing-frase .isotipo {
-    display: block;
-    animation: respirar 4.5s ease-in-out infinite;
 }
 .landing-frase p {
     font-family: var(--f-display);
@@ -698,6 +660,25 @@ body.landing {
     /* Deja lugar abajo para que el botón flotante no tape el último
        link del footer en pantallas angostas (ver .boton-flotante). */
     .landing-footer { padding-bottom: 4.5rem; }
+
+    /* El efecto de máquina de escribir asume que el lema entra en una
+       sola línea (40ch ≈ 400-450px según tamaño de fuente) - en
+       pantallas angostas eso es más ancho que el propio viewport, y
+       el texto queda cortado en vez de centrado. Acá abajo el lema
+       vuelve a comportarse como un párrafo normal: se ve entero,
+       centrado, ajustándose a 2 líneas si hace falta. El selector
+       repite ".visible" para empatar la especificidad de la regla que
+       dispara la animación (ver más arriba) - si no, esta regla
+       pierde el empate y la animación se aplica igual. */
+    .landing-hero .lema.reveal,
+    .landing-hero .lema.reveal.visible {
+        display: block;
+        width: auto;
+        overflow: visible;
+        white-space: normal;
+        border-right: none;
+        animation: none;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -709,7 +690,6 @@ body.landing {
     .landing-nav a::after,
     .landing-foto img,
     .boton-flotante { transition: none; }
-    .landing-hero .isotipo { animation: none; }
     .reveal {
         /* El script también detecta esta preferencia y agrega
            ".visible" directo (ver landing.html), pero lo dejamos
