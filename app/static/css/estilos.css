@@ -14,23 +14,28 @@
    ============================================================ */
 
 :root {
-    /* ---- Base: negro + crema ---- */
-    --ink:        #1B1912;   /* texto principal, botones, navbar */
-    --ink-soft:   #3D392B;   /* negro suavizado, hover de botones oscuros */
+    /* ---- Base: verde botánico oscuro + crema ----
+       Antes esta base era un negro con fondo cálido (marrón). Se
+       pasó a un verde botánico muy oscuro (casi negro a primera
+       vista) para reforzar la idea de calma/naturaleza sin perder
+       la seriedad del original - todo lo demás del sistema
+       (jerarquía, contraste, dónde se usa cada tono) se mantiene
+       igual, solo cambió el matiz. */
+    --ink:        #1F2620;   /* texto principal, botones, navbar */
+    --ink-soft:   #333D31;   /* verde suavizado, hover de botones oscuros */
     --stone:      #EFE6D2;   /* fondo general, crema cálido */
     --paper:      #FBF7EE;   /* superficie de tarjetas, crema claro */
     --line:       #D9CFB4;   /* líneas divisorias */
     --line-soft:  #ECE4CF;
     --muted:      #6E6754;   /* texto secundario */
 
-    /* ---- Acento neutro ("tinta suave") ----
-       Sigue siendo negro/crema: un tono intermedio para dar
-       jerarquía a eyebrows, breadcrumbs, cifras destacadas y
-       enlaces de acción neutra (editar, reactivar), sin salir de
-       la paleta. */
-    --sage:       #4A4636;
-    --sage-deep:  #2A281F;
-    --sage-tint:  #E9E1CB;
+    /* ---- Acento neutro ("verde salvia") ----
+       Tono intermedio para dar jerarquía a eyebrows, breadcrumbs,
+       cifras destacadas y enlaces de acción neutra (editar,
+       reactivar), coherente con el verde botánico de --ink. */
+    --sage:       #4F5C46;
+    --sage-deep:  #2A3325;
+    --sage-tint:  #E4E8D9;
 
     /* ---- Único acento de color: alertas y acciones destructivas ---- */
     --clay:       #9C4A32;   /* error / eliminar / sin cupo */

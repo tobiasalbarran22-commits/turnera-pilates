@@ -48,7 +48,7 @@ body.landing {
        lo que queda debajo se ve difuminado detrás de la barra en vez
        de tapado de golpe - una barra "de vidrio" en vez de una placa
        opaca (mismo recurso que usa Erika Bloom en su nav fija). */
-    background: rgba(27, 25, 18, .62);
+    background: rgba(31, 38, 32, .62);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     color: var(--paper);
