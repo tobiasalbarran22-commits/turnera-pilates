@@ -82,8 +82,7 @@ PREGUNTAS_FRECUENTES = [
     },
     {
         "pregunta": "¿Dónde queda el estudio?",
-        "respuesta": "En Campana 1495, en el límite entre Villa Santa Rita y Monte Castro, Ciudad Autónoma "
-                     "de Buenos Aires.",
+        "respuesta": "En Campana 1495, Villa Santa Rita, Ciudad Autónoma de Buenos Aires.",
     },
     {
         "pregunta": "¿Cómo reservo una clase?",
@@ -124,12 +123,18 @@ def _schema_negocio():
             "addressRegion": "CABA",
             "addressCountry": "AR",
         },
-        # areaServed: además del barrio exacto, sumamos Monte Castro
-        # (el barrio lindero) para las búsquedas de gente cercana que
-        # busca "pilates" + su propio barrio.
+        # areaServed: además del barrio exacto, sumamos los barrios
+        # linderos para las búsquedas de gente cercana que busca
+        # "pilates" + su propio barrio. Esto lo lee Google (le dice
+        # "el negocio también atiende esta zona"), pero no se muestra
+        # como texto en la página - es la forma correcta de sumar
+        # cobertura geográfica sin tener que escribirlo en el body.
         "areaServed": [
             {"@type": "Place", "name": "Villa Santa Rita, CABA"},
             {"@type": "Place", "name": "Monte Castro, CABA"},
+            {"@type": "Place", "name": "Villa del Parque, CABA"},
+            {"@type": "Place", "name": "Paternal, CABA"},
+            {"@type": "Place", "name": "Floresta, CABA"},
         ],
         "sameAs": [current_app.config["INSTAGRAM_URL"]],
         "employee": [
