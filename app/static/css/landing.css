@@ -121,10 +121,12 @@ body.landing {
 }
 
 @media (max-width: 640px) {
-    /* Barra más fina en mobile: menos padding vertical y logo un
-       toque más chico, para que ocupe menos alto de pantalla. */
+    /* Barra más fina en mobile: menos padding vertical, para que
+       ocupe menos alto de pantalla - pero el nombre "Benincasa
+       Pilates" queda más grande que en desktop, ya que en mobile es
+       el único elemento de marca visible (sin ícono al lado). */
     .landing-topbar .envoltura { padding-top: .55rem; padding-bottom: .55rem; }
-    .landing-topbar .logo { font-size: 1rem; }
+    .landing-topbar .logo { font-size: 1.3rem; }
 
     .landing-nav-toggle { display: inline-flex; align-items: center; justify-content: center; }
 
