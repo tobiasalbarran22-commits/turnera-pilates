@@ -86,8 +86,9 @@ PREGUNTAS_FRECUENTES = [
     },
     {
         "pregunta": "¿Cómo reservo una clase?",
-        "respuesta": "Reservás online, eligiendo día y horario desde la turnera del estudio, o nos escribís "
-                     "por WhatsApp y te ayudamos a encontrar el horario que mejor te quede.",
+        "respuesta": "Si ya sos alumna/o, reservás tocando el botón \"Tomar un turno\" y elegís día y "
+                     "horario desde la turnera. Si todavía no sos parte del estudio, escribinos por "
+                     "WhatsApp o Instagram y te ayudamos a arrancar.",
     },
 ]
 
