@@ -44,7 +44,13 @@ body.landing {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: var(--ink);
+    /* Semitransparente + blur en vez de un color sólido: al scrollear,
+       lo que queda debajo se ve difuminado detrás de la barra en vez
+       de tapado de golpe - una barra "de vidrio" en vez de una placa
+       opaca (mismo recurso que usa Erika Bloom en su nav fija). */
+    background: rgba(27, 25, 18, .92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     color: var(--paper);
     border-bottom: 1px solid rgba(251, 247, 238, .14);
 }
@@ -87,16 +93,31 @@ body.landing {
     flex-wrap: wrap;
 }
 .landing-nav a {
+    position: relative;
     color: rgba(251, 247, 238, .82);
     text-decoration: none;
     font-size: .88rem;
     font-weight: 500;
-    border-bottom: 1px solid transparent;
+    letter-spacing: .02em;
     padding-bottom: 2px;
     white-space: nowrap;
-    transition: color .15s ease, border-color .15s ease;
+    transition: color .15s ease;
 }
-.landing-nav a:hover { color: var(--paper); border-color: rgba(251, 247, 238, .6); }
+/* Subrayado que crece desde la izquierda al pasar el mouse, en vez de
+   aparecer de golpe - un detalle chico pero es el tipo de microinteracción
+   editorial que comparten las tres páginas de referencia. */
+.landing-nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 1px;
+    background: currentColor;
+    transition: width .25s ease;
+}
+.landing-nav a:hover { color: var(--paper); }
+.landing-nav a:hover::after { width: 100%; }
 
 /* Botón hamburguesa: solo existe visualmente en mobile (ver media
    query de abajo). En desktop el nav ya entra horizontal junto al
@@ -141,14 +162,19 @@ body.landing {
     }
 }
 
-/* ---------- Botones ---------- */
+/* ---------- Botones ----------
+   Pastilla completa (border-radius: 999px), no el radio chico que
+   usa el resto del sitio: en una landing de bienestar, un botón
+   totalmente redondeado lee como más premium/spa - es el patrón que
+   se repite en las tres páginas de referencia (Erika Bloom, Forma,
+   East River) para sus CTA principales. */
 .landing .boton-cta {
     display: inline-block;
     font-family: var(--f-body);
     font-weight: 600;
     font-size: .92rem;
-    padding: .75rem 1.5rem;
-    border-radius: 3px;
+    padding: .75rem 1.6rem;
+    border-radius: 999px;
     text-decoration: none;
     cursor: pointer;
     border: 1px solid transparent;
@@ -268,6 +294,31 @@ body.landing {
     color: var(--sage-tint);
     margin: 0 auto 1.4rem;
 }
+/* Efecto "máquina de escribir": el lema se escribe letra a letra con
+   un cursor parpadeando, en vez de aparecer entero de una - un guiño
+   sutil de movimiento (visto en East River Pilates) que le da vida
+   al hero sin caer en algo exagerado. Solo arranca cuando el propio
+   sistema de "reveal" agrega ".visible" (ver el <script> de
+   base_publica.html), así el reloj de la animación no corre mientras
+   el texto todavía está invisible. 40 caracteres = el largo exacto de
+   "Mejorando vidas, un movimiento a la vez." */
+.landing-hero .lema.reveal {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 0;
+    border-right: 2px solid var(--sage-tint);
+    vertical-align: bottom;
+}
+.landing-hero .lema.reveal.visible {
+    animation:
+        escribir-lema 1.8s steps(40, end) forwards,
+        parpadeo-cursor .8s step-end 5 1.8s,
+        ocultar-cursor .3s ease forwards 5.8s;
+}
+@keyframes escribir-lema { to { width: 40ch; } }
+@keyframes parpadeo-cursor { 0%, 100% { border-color: var(--sage-tint); } 50% { border-color: transparent; } }
+@keyframes ocultar-cursor { to { border-color: transparent; } }
 .landing-hero .sub {
     font-size: 1.02rem;
     color: rgba(251, 247, 238, .78);
@@ -377,7 +428,9 @@ body.landing {
     width: 100%;
     aspect-ratio: 4 / 3;
     object-fit: cover;
+    transition: transform .6s ease;
 }
+.landing-foto:hover img { transform: scale(1.045); }
 
 /* ---------- Valores / diferenciales ---------- */
 .landing-valores {
@@ -653,6 +706,8 @@ body.landing {
     .landing-valor,
     .landing-profe .avatar,
     .landing-nav,
+    .landing-nav a::after,
+    .landing-foto img,
     .boton-flotante { transition: none; }
     .landing-hero .isotipo { animation: none; }
     .reveal {
@@ -662,5 +717,19 @@ body.landing {
         opacity: 1;
         transform: none;
         transition: none;
+    }
+    /* El lema tiene que mostrarse entero de una, sin el efecto de
+       máquina de escribir ni el cursor. Repetimos el selector con
+       ".visible" incluido (no solo ".reveal") porque esa es la regla
+       que efectivamente dispara la animación, y tiene una clase más
+       en el selector - sin igualar esa especificidad, esta regla
+       pierde el empate y la animación se aplica igual. */
+    .landing-hero .lema.reveal,
+    .landing-hero .lema.reveal.visible {
+        width: auto;
+        overflow: visible;
+        white-space: normal;
+        border-right: none;
+        animation: none;
     }
 }
