@@ -82,13 +82,13 @@ a:hover { text-decoration-color: currentColor; }
 
 /* ---------- Navbar ---------- */
 .navbar {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--stone);
+    color: var(--ink);
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(251, 247, 238, .16);
+    border-bottom: 1px solid var(--line);
 }
 .navbar .logo {
     display: flex;
@@ -104,26 +104,26 @@ a:hover { text-decoration-color: currentColor; }
     font-family: var(--f-mono);
     font-size: .6rem;
     letter-spacing: .18em;
-    color: rgba(251, 247, 238, .55);
+    color: var(--muted);
     text-transform: uppercase;
     line-height: 1;
 }
 .navbar nav { display: flex; align-items: center; flex-wrap: wrap; gap: 1.25rem; }
-.navbar .usuario { font-family: var(--f-mono); font-size: .8rem; color: var(--stone); opacity: .75; }
+.navbar .usuario { font-family: var(--f-mono); font-size: .8rem; color: var(--muted); }
 .navbar a {
-    color: var(--paper);
+    color: var(--ink);
     text-decoration: none;
     font-size: .9rem;
     border-bottom: 1px solid transparent;
     padding-bottom: 2px;
     transition: border-color .15s ease;
 }
-.navbar a:hover { border-color: rgba(251, 247, 238, .6); }
+.navbar a:hover { border-color: var(--ink); }
 .navbar-toggle {
     display: none;
     background: none;
     border: none;
-    color: var(--paper);
+    color: var(--ink);
     cursor: pointer;
     padding: .3rem;
     line-height: 0;
@@ -333,7 +333,7 @@ td { padding: .6rem .5rem; border-bottom: 1px solid var(--line-soft); white-spac
         gap: .85rem;
         margin-top: .75rem;
         padding-top: .75rem;
-        border-top: 1px solid rgba(251, 247, 238, .16);
+        border-top: 1px solid var(--line);
     }
     .navbar nav.abierta { display: flex; }
     .contenedor { margin: 1.5rem auto; }

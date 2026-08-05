@@ -48,11 +48,11 @@ body.landing {
        lo que queda debajo se ve difuminado detrás de la barra en vez
        de tapado de golpe - una barra "de vidrio" en vez de una placa
        opaca (mismo recurso que usa Erika Bloom en su nav fija). */
-    background: rgba(27, 34, 51, .62);
+    background: rgba(251, 247, 238, .72);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    color: var(--paper);
-    border-bottom: 1px solid rgba(251, 247, 238, .14);
+    color: var(--ink);
+    border-bottom: 1px solid var(--line-soft);
 }
 .landing-topbar .envoltura {
     display: flex;
@@ -68,7 +68,7 @@ body.landing {
     font-size: 1.1rem;
     font-weight: 600;
     text-decoration: none;
-    color: inherit; /* pisa el "a { color: var(--sage-deep) }" global: ahora que el logo es un link a home, tiene que seguir viéndose blanco/crema sobre el fondo oscuro */
+    color: inherit; /* pisa el "a { color: var(--sage-deep) }" global: el logo es un link a home y tiene que verse en el tono oscuro del nav, no en el verde/azul de los links normales */
 }
 
 /* Nav de la landing (arriba a la derecha): son anclas a secciones de
@@ -82,7 +82,7 @@ body.landing {
 }
 .landing-nav a {
     position: relative;
-    color: rgba(251, 247, 238, .82);
+    color: var(--ink-soft);
     text-decoration: none;
     font-size: .88rem;
     font-weight: 500;
@@ -104,7 +104,7 @@ body.landing {
     background: currentColor;
     transition: width .25s ease;
 }
-.landing-nav a:hover { color: var(--paper); }
+.landing-nav a:hover { color: var(--ink); }
 .landing-nav a:hover::after { width: 100%; }
 
 /* Botón hamburguesa: solo existe visualmente en mobile (ver media
@@ -114,13 +114,18 @@ body.landing {
     display: none;
     background: none;
     border: none;
-    color: var(--paper);
+    color: var(--ink);
     cursor: pointer;
     padding: .4rem;
     line-height: 0;
 }
 
 @media (max-width: 640px) {
+    /* Barra más fina en mobile: menos padding vertical y logo un
+       toque más chico, para que ocupe menos alto de pantalla. */
+    .landing-topbar .envoltura { padding-top: .55rem; padding-bottom: .55rem; }
+    .landing-topbar .logo { font-size: 1rem; }
+
     .landing-nav-toggle { display: inline-flex; align-items: center; justify-content: center; }
 
     /* En mobile el nav deja de ser una fila horizontal junto al logo
@@ -139,14 +144,14 @@ body.landing {
     }
     .landing-nav.abierto {
         max-height: 260px;
-        margin-top: .5rem;
-        padding-top: .5rem;
-        border-top: 1px solid rgba(251, 247, 238, .14);
+        margin-top: .4rem;
+        padding-top: .4rem;
+        border-top: 1px solid var(--line-soft);
     }
     .landing-nav a {
         display: block;
         width: 100%;
-        padding: .65rem 0;
+        padding: .5rem 0;
     }
 }
 
@@ -169,32 +174,23 @@ body.landing {
     transition: background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
     white-space: nowrap;
 }
+/* Ahora que toda la landing es de fondo claro (ver .landing-hero y
+   .landing-seccion.acento más abajo), un solo tratamiento de botón
+   alcanza para toda la página - ya no hace falta la variante "-claro"
+   que existía para diferenciarse de secciones oscuras que ya no
+   existen. */
 .boton-cta-primario {
-    background: var(--paper);
-    color: var(--ink);
-}
-.boton-cta-primario:hover { background: var(--stone); transform: translateY(-1px); }
-
-.boton-cta-secundario {
-    background: transparent;
-    color: var(--paper);
-    border-color: rgba(251, 247, 238, .5);
-}
-.boton-cta-secundario:hover { border-color: var(--paper); transform: translateY(-1px); }
-
-/* Variantes para usar sobre fondo claro (secciones fuera del hero) */
-.boton-cta-primario-claro {
     background: var(--ink);
     color: var(--paper);
 }
-.boton-cta-primario-claro:hover { background: var(--ink-soft); transform: translateY(-1px); }
+.boton-cta-primario:hover { background: var(--ink-soft); transform: translateY(-1px); }
 
-.boton-cta-secundario-claro {
+.boton-cta-secundario {
     background: transparent;
     color: var(--ink);
     border-color: var(--line);
 }
-.boton-cta-secundario-claro:hover { border-color: var(--ink); transform: translateY(-1px); }
+.boton-cta-secundario:hover { border-color: var(--ink); transform: translateY(-1px); }
 
 .landing .fila-botones {
     display: flex;
@@ -223,8 +219,8 @@ body.landing {
 
 /* ---------- Hero ---------- */
 .landing-hero {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--stone);
+    color: var(--ink);
     padding: 6rem 0;
     text-align: center;
     /* Casi toda la pantalla en la primera vista, sin forzar el 100vh
@@ -243,16 +239,15 @@ body.landing {
     font-size: .72rem;
     letter-spacing: .22em;
     text-transform: uppercase;
-    color: var(--sage-tint);
-    opacity: .8;
+    color: var(--sage);
     display: block;
     margin-bottom: 1rem;
 }
 .landing-hero h1 {
     font-family: var(--f-display);
     font-weight: 600;
-    font-size: clamp(2.1rem, 5vw, 3.4rem);
-    line-height: 1.12;
+    font-size: clamp(2.6rem, 6.5vw, 4.4rem);
+    line-height: 1.08;
     letter-spacing: -0.01em;
     margin: 0 auto .9rem;
     max-width: 20ch;
@@ -261,7 +256,7 @@ body.landing {
     font-family: var(--f-display);
     font-style: italic;
     font-size: clamp(1.05rem, 2vw, 1.3rem);
-    color: var(--sage-tint);
+    color: var(--sage-deep);
     margin: 0 auto 1.4rem;
 }
 /* Efecto "máquina de escribir": el lema se escribe letra a letra con
@@ -284,13 +279,13 @@ body.landing {
     height: 1em;
     margin-left: 2px;
     vertical-align: text-bottom;
-    background: var(--sage-tint);
+    background: var(--sage-deep);
     animation: parpadeo-cursor .8s step-end infinite;
 }
 @keyframes parpadeo-cursor { 50% { opacity: 0; } }
 .landing-hero .sub {
     font-size: 1.02rem;
-    color: rgba(251, 247, 238, .78);
+    color: var(--muted);
     max-width: 46ch;
     margin: 0 auto 2.2rem;
 }
@@ -302,7 +297,6 @@ body.landing {
 }
 .landing-seccion.claro { background: var(--stone); }
 .landing-seccion.papel { background: var(--paper); }
-.landing-seccion.oscuro { background: var(--ink); color: var(--paper); }
 
 .landing-seccion .cabecera {
     text-align: center;
@@ -318,7 +312,6 @@ body.landing {
     color: var(--sage);
     margin-bottom: .6rem;
 }
-.landing-seccion.oscuro .eyebrow { color: var(--sage-tint); opacity: .85; }
 .landing-seccion h2 {
     font-family: var(--f-display);
     font-weight: 600;
@@ -331,7 +324,6 @@ body.landing {
     margin: 0;
     font-size: 1rem;
 }
-.landing-seccion.oscuro .cabecera p { color: rgba(251, 247, 238, .75); }
 
 /* ---------- Frase / filosofía ---------- */
 .landing-frase .envoltura {
@@ -345,7 +337,7 @@ body.landing {
     font-size: clamp(1.35rem, 3.2vw, 2.05rem);
     line-height: 1.55;
     letter-spacing: -0.01em;
-    color: var(--paper);
+    color: var(--ink-soft);
     margin: 0;
 }
 
@@ -590,9 +582,10 @@ body.landing {
 /* ---------- Botón flotante ("Tomar un turno") ----------
    Fijo en la esquina inferior derecha, sobre todo el contenido, para
    que quien esté leyendo la landing siempre tenga a mano la acción
-   principal sin tener que volver a subir hasta la barra superior.
-   Un solo estilo (oscuro + sombra) para que se lea bien tanto sobre
-   las secciones claras como sobre las oscuras. */
+   principal sin tener que volver a subir hasta la barra superior. Se
+   deja oscuro a propósito (ahora que el resto de la página es clara):
+   es el único acento oscuro que queda, así el ojo lo encuentra rápido
+   como "la acción principal" en vez de perderse entre el resto. */
 .boton-flotante {
     position: fixed;
     right: 1.5rem;
@@ -630,12 +623,12 @@ body.landing {
 
 /* ---------- Footer ---------- */
 .landing-footer {
-    background: var(--ink);
-    color: rgba(251, 247, 238, .6);
+    background: var(--stone);
+    color: var(--muted);
     padding: 2rem 0;
     text-align: center;
     font-size: .8rem;
-    border-top: 1px solid rgba(251, 247, 238, .12);
+    border-top: 1px solid var(--line);
 }
 .landing-footer .envoltura {
     display: flex;
@@ -644,11 +637,11 @@ body.landing {
     align-items: center;
 }
 .landing-footer a {
-    color: var(--paper);
+    color: var(--ink);
     text-decoration: none;
-    border-bottom: 1px solid rgba(251, 247, 238, .35);
+    border-bottom: 1px solid var(--line);
 }
-.landing-footer a:hover { border-color: var(--paper); }
+.landing-footer a:hover { border-color: var(--ink); }
 .landing-footer .enlaces { display: flex; gap: 1.25rem; flex-wrap: wrap; justify-content: center; }
 
 @media (max-width: 780px) {
