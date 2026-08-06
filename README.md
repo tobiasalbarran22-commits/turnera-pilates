@@ -111,8 +111,8 @@ más abajo):
 2. **Recordatorio**: el día anterior a la clase. Este NO lo dispara el
    sistema solo - necesita que algo lo llame una vez por día (en
    desarrollo local, el Programador de tareas de Windows corriendo
-   `enviar_recordatorios.py`; en producción, GitHub Actions llamando a
-   una ruta del sitio - ver ambos casos más abajo).
+   `enviar_recordatorios.py`; en producción, un cron job de Render
+   llamando a una ruta del sitio - ver ambos casos más abajo).
 3. **Aviso de cupo liberado (🔔 campanita)**: si una clase está llena,
    el alumno puede tocar "Avisarme" para esa clase. Si alguien cancela
    y se libera un lugar, se le manda un mail a todas/os las/os que
@@ -177,8 +177,8 @@ hora programada. Pasos con el Programador de tareas de Windows:
 
 **Una vez publicado el sitio online (ver más abajo), este método deja
 de usarse** - ya no depende de `enviar_recordatorios.py` corriendo en
-tu PC, sino de GitHub Actions llamando a una ruta del propio sitio.
-Ver "Recordatorio diario en producción" dentro de la sección de
+tu PC, sino de un cron job de Render llamando a una ruta del propio
+sitio. Ver "Recordatorio diario en producción" dentro de la sección de
 Render.
 
 ## Integración con Google Calendar (opcional)
@@ -204,76 +204,92 @@ Listo: a partir de acá, cada turno reservado crea un evento en ese calendario, 
 
 ## Publicar el sitio online (Render)
 
-Usamos [Render](https://render.com) para tenerlo publicado de verdad,
-con **plan Starter** (no el free): a diferencia del plan gratuito, el
-Starter no "duerme" por falta de uso (siempre responde al instante) y
-soporta un **disco persistente**, así la base de datos no se pierde
-en cada redeploy o reinicio. El repo ya incluye `render.yaml` con toda
-esta configuración - Render la aplica sola.
+Usamos [Render](https://render.com) para tenerlo publicado de verdad.
+El repo incluye `render.yaml` con **dos servicios**, que Render crea
+juntos al conectar el repo:
+
+1. **`turnera-pilates`** (web, plan **Starter**): a diferencia del
+   plan gratuito, el Starter no "duerme" por falta de uso (siempre
+   responde al instante) y soporta un **disco persistente**, así la
+   base de datos no se pierde en cada redeploy o reinicio.
+2. **`turnera-recordatorios`** (cron job): dispara una vez por día el
+   mail de "mañana tenés clase", llamando a una ruta del propio sitio.
+   Reemplaza al Programador de tareas de Windows (que dependía de una
+   PC prendida) y no necesita nada externo a Render (antes usábamos
+   GitHub Actions para esto; ya no hace falta).
 
 ### Si es la primera vez que se publica (Blueprint nuevo)
 
 1. Entrá a [render.com](https://render.com) y creá una cuenta (podés
    registrarte directo con tu cuenta de GitHub).
 2. Cargá un medio de pago en tu cuenta de Render (Account Settings →
-   Billing) - el plan Starter y el disco son pagos (ver costos más
-   abajo), Render no deja crearlos sin una tarjeta cargada.
+   Billing) - el plan Starter, el disco y el cron job son pagos (ver
+   costos más abajo), Render no deja crearlos sin una tarjeta cargada.
 3. Dashboard → **"New +"** → **"Blueprint"**.
-4. Elegí el repositorio `turnera-pilates`. Render detecta el
-   `render.yaml` solo y muestra el servicio que va a crear, con el
-   plan Starter y un disco de 1GB ya declarados.
+4. Elegí el repositorio `turnera-pilates`. Render lee el `render.yaml`
+   solo y te muestra **los dos servicios** que va a crear: el web
+   (plan Starter + disco de 1GB) y el cron job.
 5. Te va a pedir completar los valores que **no** están en el repo por
-   seguridad (nunca se suben credenciales a GitHub):
-   - `MAIL_USUARIO`: `benincasapilates@gmail.com`
+   seguridad (nunca se suben credenciales a GitHub) - algunos se piden
+   dos veces, una por cada servicio, porque `TAREAS_SECRETO` es una
+   variable propia de cada uno (tiene que quedar **igual** en los
+   dos):
+   - `MAIL_USUARIO`: `benincasapilates@gmail.com` (solo en el web)
    - `MAIL_PASSWORD`: la contraseña de aplicación de 16 letras (la
-     misma que está en tu `.env` local)
-   - `TAREAS_SECRETO`: una clave larga y al azar (la vas a necesitar
-     de nuevo en el paso de GitHub Actions, más abajo - guardala)
+     misma que está en tu `.env` local; solo en el web)
+   - `TAREAS_SECRETO`: una clave larga y al azar, inventada por vos
+     (por ejemplo generando 32 caracteres al azar en cualquier
+     generador de contraseñas) - pegá el **mismo valor** en el web y
+     en el cron job.
 6. **"Apply"** / **"Create"** → Render instala las dependencias, corre
-   `seed.py` (crea las tablas y el usuario admin) y levanta el
-   servidor con `gunicorn`. Tarda unos minutos la primera vez.
-7. Cuando termina, te da una URL fija tipo
+   `seed.py` (crea las tablas y el usuario admin), levanta el servidor
+   con `gunicorn` y deja el cron job programado. Tarda unos minutos la
+   primera vez.
+7. Cuando termina, el servicio web te da una URL fija tipo
    `https://turnera-pilates.onrender.com`.
 8. Entrá con el usuario admin del seed (`admin@estudio.com` /
    `cambiar123`) y **cambiá esa contraseña enseguida** desde el panel.
 
-### Si el servicio ya existía en el plan free (pasar a Starter + disco)
+### Si el servicio ya existía (de antes de tener el cron job en Render)
 
 1. Cargá un medio de pago en tu cuenta de Render (Account Settings →
    Billing), si todavía no lo hiciste.
-2. Hacé `git push` con el `render.yaml` actualizado (plan `starter` +
-   bloque `disk`).
+2. Hacé `git push` con el `render.yaml` actualizado (incluye ahora el
+   bloque del cron job `turnera-recordatorios`).
 3. En el dashboard de Render, entrá al Blueprint del proyecto y
    sincronizalo con los cambios nuevos (o simplemente esperá: si el
    auto-deploy está activado, Render lo toma solo en cuanto detecta el
-   push). Te va a mostrar el cambio de plan y el disco nuevo para
-   confirmar el costo antes de aplicarlo.
-4. Sumá la variable `TAREAS_SECRETO` en la sección "Environment" del
-   servicio (Render solo pregunta automáticamente por las variables
-   nuevas si el sync las detecta; si no te la pidió, agregala a mano).
-   Usá una clave larga y al azar - la vas a necesitar de nuevo en el
-   paso de GitHub Actions, más abajo.
+   push). Te va a mostrar el cron job nuevo para confirmar el costo
+   antes de crearlo.
+4. Te va a pedir el valor de `TAREAS_SECRETO` para el cron job -
+   poné **el mismo valor** que ya tenías configurado en el servicio
+   web (Render → servicio web → "Environment", ahí lo podés ver/copiar).
+5. Si venías usando GitHub Actions para esto, ya podés desactivarlo:
+   borrá el archivo `.github/workflows/recordatorios.yml` del repo (o
+   simplemente el workflow desde la pestaña "Actions" → "..." →
+   "Disable workflow") para no tener dos disparadores mandando el
+   mismo recordatorio dos veces.
 
 **Costo aproximado**: plan Starter (USD 7/mes) + disco de 1GB
-(centavos por mes) ≈ **USD 7-8/mes en total**. De sobra para una base
-SQLite de un estudio de este tamaño durante años.
+(centavos por mes) + cron job (factura por segundo que corre, con un
+mínimo de USD 1/mes) ≈ **USD 8-9/mes en total**. De sobra para una
+base SQLite de un estudio de este tamaño durante años.
 
-### Recordatorio diario en producción (GitHub Actions)
+### Recordatorio diario en producción (cron job de Render)
 
 El mail de "mañana tenés clase" necesita que algo lo dispare una vez
-por día - en producción ya no depende de `enviar_recordatorios.py`
+por día - en producción no depende de `enviar_recordatorios.py`
 corriendo en tu PC (ver la sección de más arriba, que ahora es solo
-para desarrollo local), sino de una llamada automática desde GitHub:
+para desarrollo local), sino del servicio `turnera-recordatorios` que
+ya viene declarado en `render.yaml` (ver paso a paso arriba). Corre
+todos los días a las 23:00 UTC (20:00 hora Argentina) y llama a la
+misma ruta protegida por `TAREAS_SECRETO` que antes llamaba GitHub
+Actions.
 
-1. En GitHub, andá al repositorio → **Settings** → **Secrets and
-   variables** → **Actions** → **New repository secret**.
-2. Nombre: `TAREAS_SECRETO`. Valor: la misma clave que pusiste en
-   Render (paso anterior) - tiene que ser **idéntica** en los dos
-   lugares, es lo que valida que el llamado es legítimo.
-3. Listo - el workflow `.github/workflows/recordatorios.yml` ya está
-   en el repo, programado para las 20:00 hora Argentina todos los
-   días. Podés probarlo ya mismo sin esperar: pestaña **"Actions"** del
-   repo → **"Recordatorio diario"** → **"Run workflow"**.
+Para probarlo sin esperar al horario programado: Dashboard de Render →
+servicio **`turnera-recordatorios`** → botón **"Trigger Run"** (o
+"Run Job", según la versión del dashboard). Podés ver el resultado en
+la pestaña "Logs" de ese mismo servicio.
 
 ### Chequeos después de publicar
 
@@ -281,9 +297,8 @@ para desarrollo local), sino de una llamada automática desde GitHub:
   (sin la pantalla de "iniciando servidor" del plan free).
 - Reservá un turno de prueba y confirmá que llega el mail de
   confirmación.
-- Corré el workflow de GitHub Actions a mano una vez (paso 3 de
-  arriba) y confirmá en los logs de Render que dice
-  `recordatorios_enviados`.
+- Dispará el cron job a mano (paso de arriba) y confirmá en sus logs
+  que dice `recordatorios_enviados`.
 - Hacé un redeploy de prueba (por ejemplo, con un commit chico) y
   confirmá que los usuarios/reservas siguen ahí después - eso confirma
   que el disco persistente está funcionando de verdad.

@@ -33,9 +33,29 @@ services:
       # "sqlite://": la ruta que sigue es absoluta (/var/data/...).
       - key: DATABASE_URL
         value: "sqlite:////var/data/turnera.db"
-      # Token compartido para que el disparador externo del
-      # recordatorio diario (ver .github/workflows/recordatorios.yml)
-      # pueda autenticarse - sin esto, cualquiera que encuentre la URL
-      # podría hacer que el sistema mande recordatorios de más.
+      # Token compartido para que el disparador del recordatorio
+      # diario (el cron job de acá abajo) pueda autenticarse - sin
+      # esto, cualquiera que encuentre la URL podría hacer que el
+      # sistema mande recordatorios de más.
+      - key: TAREAS_SECRETO
+        sync: false
+
+  # Dispara una vez por día el recordatorio "mañana tenés clase" (ver
+  # app/public/routes.py: tarea_recordatorios). Antes esto lo hacía
+  # GitHub Actions llamando a la URL pública; ahora lo hace un cron
+  # job de Render, que corre dentro de la misma cuenta/proyecto.
+  - type: cron
+    name: turnera-recordatorios
+    env: python
+    plan: starter
+    schedule: "0 23 * * *" # 23:00 UTC = 20:00 hora Argentina, todos los días
+    buildCommand: "echo 'sin build'"
+    startCommand: >
+      curl --fail --silent --show-error
+      -X POST "https://turnera-pilates.onrender.com/tareas/recordatorios"
+      -H "X-Tarea-Token: $TAREAS_SECRETO"
+    envVars:
+      # Mismo valor que el TAREAS_SECRETO del servicio web de arriba -
+      # Render los pide por separado porque son servicios distintos.
       - key: TAREAS_SECRETO
         sync: false

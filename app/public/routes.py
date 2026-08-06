@@ -263,9 +263,9 @@ def sitemap_xml():
 # ------------------------------------------------------------------
 # TAREA PROGRAMADA: recordatorio del día anterior ("mañana tenés
 # clase"). No lo dispara ninguna persona ni acción de la turnera -
-# necesita que algo externo lo llame una vez por día (ver
-# .github/workflows/recordatorios.yml, que lo hace vía GitHub
-# Actions, gratis, sin depender de que ninguna PC esté prendida).
+# necesita que algo externo lo llame una vez por día (ver render.yaml,
+# servicio "turnera-recordatorios": un cron job de Render que llama a
+# esta ruta, sin depender de que ninguna PC esté prendida).
 # ------------------------------------------------------------------
 
 @bp.route("/tareas/recordatorios", methods=["POST"])
