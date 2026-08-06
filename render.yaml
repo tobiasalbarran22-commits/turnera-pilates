@@ -6,9 +6,18 @@ services:
   - type: web
     name: turnera-pilates
     env: python
-    plan: free
-    buildCommand: "pip install -r requirements.txt && python seed.py"
-    startCommand: "gunicorn run:app"
+    plan: starter
+    # OJO: el disco persistente (más abajo) solo está disponible en
+    # tiempo de EJECUCIÓN, no durante el build - por eso seed.py
+    # (que crea las tablas/usuario admin la primera vez) se corre acá,
+    # no en buildCommand. Se puede correr en cada arranque sin miedo:
+    # es idempotente, no borra ni duplica nada si ya existían datos.
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python seed.py && gunicorn run:app"
+    disk:
+      name: turnera-datos
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: FLASK_ENV
         value: production
@@ -17,4 +26,16 @@ services:
       - key: MAIL_USUARIO
         sync: false
       - key: MAIL_PASSWORD
+        sync: false
+      # La base SQLite pasa a vivir DENTRO del disco persistente de
+      # arriba, en vez del filesystem normal del contenedor (que se
+      # borra en cada redeploy/reinicio). Con 4 barras después de
+      # "sqlite://": la ruta que sigue es absoluta (/var/data/...).
+      - key: DATABASE_URL
+        value: "sqlite:////var/data/turnera.db"
+      # Token compartido para que el disparador externo del
+      # recordatorio diario (ver .github/workflows/recordatorios.yml)
+      # pueda autenticarse - sin esto, cualquiera que encuentre la URL
+      # podría hacer que el sistema mande recordatorios de más.
+      - key: TAREAS_SECRETO
         sync: false

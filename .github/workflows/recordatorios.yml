@@ -1,0 +1,27 @@
+# Dispara una vez por día el recordatorio "mañana tenés clase" (ver
+# app/public/routes.py: tarea_recordatorios). El sistema NO lo hace
+# solo - necesita que algo externo lo llame, y esto reemplaza al
+# Programador de tareas de Windows (que dependía de tener una PC
+# prendida) ahora que la app corre siempre online en Render.
+#
+# Requiere un secreto de repo llamado TAREAS_SECRETO, con el MISMO
+# valor que la variable de entorno TAREAS_SECRETO configurada en
+# Render (ver README) - Settings > Secrets and variables > Actions.
+name: Recordatorio diario
+
+on:
+  schedule:
+    # 23:00 UTC = 20:00 hora Argentina (UTC-3 todo el año, sin
+    # horario de verano).
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}  # permite dispararlo a mano desde la pestaña "Actions" de GitHub, para probar
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar al recordatorio
+        run: |
+          curl --fail --silent --show-error \
+            -X POST "https://turnera-pilates.onrender.com/tareas/recordatorios" \
+            -H "X-Tarea-Token: ${{ secrets.TAREAS_SECRETO }}"

@@ -109,9 +109,10 @@ más abajo):
 
 1. **Confirmación**: al reservar un turno.
 2. **Recordatorio**: el día anterior a la clase. Este NO lo dispara el
-   sistema solo - hay que programar `python enviar_recordatorios.py`
-   para que corra una vez por día (Programador de tareas de Windows,
-   o cron en Linux/Mac; ver pasos concretos para Windows más abajo).
+   sistema solo - necesita que algo lo llame una vez por día (en
+   desarrollo local, el Programador de tareas de Windows corriendo
+   `enviar_recordatorios.py`; en producción, GitHub Actions llamando a
+   una ruta del sitio - ver ambos casos más abajo).
 3. **Aviso de cupo liberado (🔔 campanita)**: si una clase está llena,
    el alumno puede tocar "Avisarme" para esa clase. Si alguien cancela
    y se libera un lugar, se le manda un mail a todas/os las/os que
@@ -158,9 +159,9 @@ queda en `False`).
 con el valor correcto para Gmail por defecto; solo hace falta tocarlos
 si el día de mañana cambian a otro proveedor de mail.
 
-### Programar el recordatorio diario en Windows (mientras corre en local)
+### Programar el recordatorio diario en Windows (solo para desarrollo local)
 
-Mientras el sistema corra en tu PC (no publicado online todavía), el
+Mientras el sistema corra en tu PC (no publicado online), el
 recordatorio del día anterior necesita que la PC esté prendida a la
 hora programada. Pasos con el Programador de tareas de Windows:
 
@@ -174,9 +175,11 @@ hora programada. Pasos con el Programador de tareas de Windows:
 5. Finalizar. Podés probarla ya mismo con clic derecho → "Ejecutar", y
    revisar en la pestaña "Historial" que haya corrido sin errores.
 
-Cuando el día de mañana se despliegue online, este paso se reemplaza
-por la tarea programada nativa del hosting que se elija (ya no
-dependería de que la PC esté prendida).
+**Una vez publicado el sitio online (ver más abajo), este método deja
+de usarse** - ya no depende de `enviar_recordatorios.py` corriendo en
+tu PC, sino de GitHub Actions llamando a una ruta del propio sitio.
+Ver "Recordatorio diario en producción" dentro de la sección de
+Render.
 
 ## Integración con Google Calendar (opcional)
 
@@ -201,48 +204,92 @@ Listo: a partir de acá, cada turno reservado crea un evento en ese calendario, 
 
 ## Publicar el sitio online (Render)
 
-Para poder abrir la turnera desde el celular (o desde cualquier lugar,
-no solo la PC donde corre) hace falta publicarla en un hosting. Usamos
-[Render](https://render.com), plan gratuito. El repo ya incluye
-`render.yaml`, así que Render completa casi toda la configuración solo:
+Usamos [Render](https://render.com) para tenerlo publicado de verdad,
+con **plan Starter** (no el free): a diferencia del plan gratuito, el
+Starter no "duerme" por falta de uso (siempre responde al instante) y
+soporta un **disco persistente**, así la base de datos no se pierde
+en cada redeploy o reinicio. El repo ya incluye `render.yaml` con toda
+esta configuración - Render la aplica sola.
+
+### Si es la primera vez que se publica (Blueprint nuevo)
 
 1. Entrá a [render.com](https://render.com) y creá una cuenta (podés
-   registrarte directo con tu cuenta de GitHub, así queda todo
-   conectado de una).
-2. Dashboard → **"New +"** → **"Blueprint"**.
-3. Elegí el repositorio `turnera-pilates`. Render detecta el
-   `render.yaml` solo y muestra el servicio que va a crear
-   (`turnera-pilates`, plan free).
-4. Te va a pedir completar dos valores que **no** están en el repo por
+   registrarte directo con tu cuenta de GitHub).
+2. Cargá un medio de pago en tu cuenta de Render (Account Settings →
+   Billing) - el plan Starter y el disco son pagos (ver costos más
+   abajo), Render no deja crearlos sin una tarjeta cargada.
+3. Dashboard → **"New +"** → **"Blueprint"**.
+4. Elegí el repositorio `turnera-pilates`. Render detecta el
+   `render.yaml` solo y muestra el servicio que va a crear, con el
+   plan Starter y un disco de 1GB ya declarados.
+5. Te va a pedir completar los valores que **no** están en el repo por
    seguridad (nunca se suben credenciales a GitHub):
    - `MAIL_USUARIO`: `benincasapilates@gmail.com`
    - `MAIL_PASSWORD`: la contraseña de aplicación de 16 letras (la
      misma que está en tu `.env` local)
-5. **"Apply"** / **"Create"** → Render instala las dependencias, corre
+   - `TAREAS_SECRETO`: una clave larga y al azar (la vas a necesitar
+     de nuevo en el paso de GitHub Actions, más abajo - guardala)
+6. **"Apply"** / **"Create"** → Render instala las dependencias, corre
    `seed.py` (crea las tablas y el usuario admin) y levanta el
    servidor con `gunicorn`. Tarda unos minutos la primera vez.
-6. Cuando termina, te da una URL fija tipo
-   `https://turnera-pilates.onrender.com` — esa es la que abrís desde
-   el celular (con wifi o datos, es pública) o le pasás a quien
-   quieras.
-7. Entrá con el usuario admin del seed (`admin@estudio.com` /
+7. Cuando termina, te da una URL fija tipo
+   `https://turnera-pilates.onrender.com`.
+8. Entrá con el usuario admin del seed (`admin@estudio.com` /
    `cambiar123`) y **cambiá esa contraseña enseguida** desde el panel.
 
-**Dos límites del plan free a tener en cuenta** (para probar están
-bien, para uso real del estudio no):
-- El servicio "duerme" después de ~15 minutos sin visitas — la
-  primera carga después de eso tarda 30-50 segundos en responder (las
-  siguientes son normales).
-- El disco no es persistente: cada vez que se hace un redeploy (o el
-  servicio se reinicia), se pierde la base SQLite y vuelve al estado
-  inicial de `seed.py` (usuarios, reservas, todo). Sirve perfecto para
-  probar la web y el envío de mails desde otros dispositivos; para que
-  el estudio la use de verdad con datos que tienen que persistir, hay
-  que pasar a un plan pago con disco persistente o a una base Postgres
-  (Render ofrece una gratis, pero expira a los 90 días).
+### Si el servicio ya existía en el plan free (pasar a Starter + disco)
+
+1. Cargá un medio de pago en tu cuenta de Render (Account Settings →
+   Billing), si todavía no lo hiciste.
+2. Hacé `git push` con el `render.yaml` actualizado (plan `starter` +
+   bloque `disk`).
+3. En el dashboard de Render, entrá al Blueprint del proyecto y
+   sincronizalo con los cambios nuevos (o simplemente esperá: si el
+   auto-deploy está activado, Render lo toma solo en cuanto detecta el
+   push). Te va a mostrar el cambio de plan y el disco nuevo para
+   confirmar el costo antes de aplicarlo.
+4. Sumá la variable `TAREAS_SECRETO` en la sección "Environment" del
+   servicio (Render solo pregunta automáticamente por las variables
+   nuevas si el sync las detecta; si no te la pidió, agregala a mano).
+   Usá una clave larga y al azar - la vas a necesitar de nuevo en el
+   paso de GitHub Actions, más abajo.
+
+**Costo aproximado**: plan Starter (USD 7/mes) + disco de 1GB
+(centavos por mes) ≈ **USD 7-8/mes en total**. De sobra para una base
+SQLite de un estudio de este tamaño durante años.
+
+### Recordatorio diario en producción (GitHub Actions)
+
+El mail de "mañana tenés clase" necesita que algo lo dispare una vez
+por día - en producción ya no depende de `enviar_recordatorios.py`
+corriendo en tu PC (ver la sección de más arriba, que ahora es solo
+para desarrollo local), sino de una llamada automática desde GitHub:
+
+1. En GitHub, andá al repositorio → **Settings** → **Secrets and
+   variables** → **Actions** → **New repository secret**.
+2. Nombre: `TAREAS_SECRETO`. Valor: la misma clave que pusiste en
+   Render (paso anterior) - tiene que ser **idéntica** en los dos
+   lugares, es lo que valida que el llamado es legítimo.
+3. Listo - el workflow `.github/workflows/recordatorios.yml` ya está
+   en el repo, programado para las 20:00 hora Argentina todos los
+   días. Podés probarlo ya mismo sin esperar: pestaña **"Actions"** del
+   repo → **"Recordatorio diario"** → **"Run workflow"**.
+
+### Chequeos después de publicar
+
+- Abrí la URL desde el celular y confirmá que responde al instante
+  (sin la pantalla de "iniciando servidor" del plan free).
+- Reservá un turno de prueba y confirmá que llega el mail de
+  confirmación.
+- Corré el workflow de GitHub Actions a mano una vez (paso 3 de
+  arriba) y confirmá en los logs de Render que dice
+  `recordatorios_enviados`.
+- Hacé un redeploy de prueba (por ejemplo, con un commit chico) y
+  confirmá que los usuarios/reservas siguen ahí después - eso confirma
+  que el disco persistente está funcionando de verdad.
 
 Cada vez que hagas `git push` a `main`, Render vuelve a desplegar solo
-con los cambios nuevos.
+con los cambios nuevos, sin tocar los datos del disco persistente.
 
 ## Estado actual
 

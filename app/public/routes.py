@@ -17,10 +17,11 @@ No hace falta tocar nada de app/__init__.py ni de las otras páginas.
 
 from urllib.parse import quote
 
-from flask import render_template, current_app, url_for, redirect, Response
+from flask import render_template, current_app, url_for, redirect, Response, request, abort
 from flask_login import current_user
 
 from app.public import bp
+from app.extensions import csrf
 
 # Cada página pública que exista suma una entrada acá: el sitemap.xml
 # se arma solo recorriendo esta lista (ver sitemap_xml más abajo).
@@ -257,3 +258,30 @@ def sitemap_xml():
         "</urlset>\n"
     )
     return Response(contenido, mimetype="application/xml")
+
+
+# ------------------------------------------------------------------
+# TAREA PROGRAMADA: recordatorio del día anterior ("mañana tenés
+# clase"). No lo dispara ninguna persona ni acción de la turnera -
+# necesita que algo externo lo llame una vez por día (ver
+# .github/workflows/recordatorios.yml, que lo hace vía GitHub
+# Actions, gratis, sin depender de que ninguna PC esté prendida).
+# ------------------------------------------------------------------
+
+@bp.route("/tareas/recordatorios", methods=["POST"])
+@csrf.exempt  # lo llama un curl externo, no un <form> con sesión - no tiene token CSRF para mandar
+def tarea_recordatorios():
+    # Protegido con un token compartido (no con login: quien llama a
+    # esto no es una persona con sesión, es un disparador automático).
+    # Sin este chequeo, cualquiera que encontrara esta URL podría
+    # hacer que el sistema mande recordatorios de más con solo
+    # pegarla en el navegador.
+    token_esperado = current_app.config.get("TAREAS_SECRETO")
+    token_recibido = request.headers.get("X-Tarea-Token")
+    if not token_esperado or token_recibido != token_esperado:
+        abort(403)
+
+    from app.alumno.services import enviar_recordatorios_del_dia_siguiente
+
+    cantidad = enviar_recordatorios_del_dia_siguiente()
+    return {"recordatorios_enviados": cantidad}, 200

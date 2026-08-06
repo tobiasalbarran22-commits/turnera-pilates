@@ -117,6 +117,13 @@ class Config:
     MAIL_REMITENTE = os.environ.get("MAIL_REMITENTE", MAIL_USUARIO)
     MAIL_HABILITADO = bool(MAIL_USUARIO and MAIL_PASSWORD)
 
+    # --- Tarea programada: recordatorio diario ---
+    # Token compartido que valida las llamadas a /tareas/recordatorios
+    # (ver app/public/routes.py). Sin default: si no está configurado,
+    # esa ruta rechaza cualquier llamada (ver el chequeo "if not
+    # token_esperado" en la ruta) en vez de quedar abierta por error.
+    TAREAS_SECRETO = os.environ.get("TAREAS_SECRETO", "")
+
     # --- Redes y contacto del estudio (landing page) ---
     # WHATSAPP_NUMERO: formato wa.me, sin "+" ni espacios (código de
     # país + código de área sin el 0 + número sin el 15).
