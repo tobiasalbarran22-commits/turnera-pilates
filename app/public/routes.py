@@ -25,7 +25,12 @@ from app.public import bp
 # Cada página pública que exista suma una entrada acá: el sitemap.xml
 # se arma solo recorriendo esta lista (ver sitemap_xml más abajo).
 PAGINAS_PUBLICAS = [
-    {"endpoint": "public.index", "changefreq": "monthly", "priority": "1.0"},
+    # "lastmod" es la fecha del último cambio de CONTENIDO real de esa
+    # página (no la fecha de hoy calculada en cada visita - eso es un
+    # antipatrón de SEO, Google desconfía de un sitemap donde todo dice
+    # "recién cambiado" siempre). Se actualiza a mano cuando cambie
+    # algo de la landing.
+    {"endpoint": "public.index", "changefreq": "monthly", "priority": "1.0", "lastmod": "2026-08-06"},
 ]
 
 # El equipo del estudio: una sola fuente de verdad que alimenta tanto
@@ -226,6 +231,8 @@ def robots_txt():
         "Disallow: /alumno/\n"
         "Disallow: /login\n"
         "Disallow: /cambiar-password\n"
+        "Disallow: /redirigir\n"
+        "Disallow: /logout\n"
         f"\nSitemap: {url_for('public.sitemap_xml', _external=True)}\n"
     )
     return Response(contenido, mimetype="text/plain")
@@ -238,6 +245,7 @@ def sitemap_xml():
         filas.append(
             "  <url>\n"
             f"    <loc>{url_for(pagina['endpoint'], _external=True)}</loc>\n"
+            f"    <lastmod>{pagina['lastmod']}</lastmod>\n"
             f"    <changefreq>{pagina['changefreq']}</changefreq>\n"
             f"    <priority>{pagina['priority']}</priority>\n"
             "  </url>"

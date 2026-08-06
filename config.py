@@ -15,6 +15,14 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # sube al repo: ya está en .gitignore).
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
+# Valor de SECRET_KEY solo para desarrollo local, cuando no hay
+# variable de entorno definida. Queda como constante aparte (no
+# escrita directo adentro de Config) para que app/__init__.py pueda
+# comparar contra este mismo valor exacto y detectar si en producción
+# se coló este default en vez de una clave real - ver el chequeo en
+# create_app().
+SECRET_KEY_DEV_DEFAULT = "clave-de-desarrollo-cambiar-en-produccion"
+
 
 class Config:
     """
@@ -26,7 +34,7 @@ class Config:
     # SECRET_KEY: la usa Flask para firmar las cookies de sesión y
     # proteger los formularios contra ataques CSRF. En producción esto
     # SIEMPRE debe venir de una variable de entorno, nunca hardcodeado.
-    SECRET_KEY = os.environ.get("SECRET_KEY", "clave-de-desarrollo-cambiar-en-produccion")
+    SECRET_KEY = os.environ.get("SECRET_KEY", SECRET_KEY_DEV_DEFAULT)
 
     # Ubicación de la base de datos SQLite. SQLite guarda todo en un
     # único archivo (instance/turnera.db), no necesita un servidor
@@ -38,6 +46,19 @@ class Config:
     # Desactivamos el sistema de tracking de modificaciones de SQLAlchemy:
     # consume memoria extra y no lo necesitamos.
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # --- Cookies de sesión: banderas de seguridad ---
+    # HttpOnly ya es el default de Flask (JS del navegador no puede leer
+    # la cookie ni aunque hubiera un XSS) y SameSite=Lax ya es el
+    # default de los navegadores modernos desde 2020 - las dejamos acá
+    # de forma explícita en vez de confiar en el default silencioso.
+    # "Lax" (no "Strict") para que un link externo (WhatsApp, Instagram,
+    # un favorito guardado) que lleve directo a una página con sesión
+    # siga funcionando sin desloguear a nadie.
+    SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_SAMESITE = "Lax"
 
     # --- Reglas de negocio del estudio de pilates ---
     # Las dejamos acá, como configuración, en vez de "hardcodeadas" en el
@@ -114,6 +135,20 @@ class ProductionConfig(Config):
     DEBUG = False
     # En producción, SECRET_KEY y DATABASE_URL DEBEN venir de variables
     # de entorno del servidor (Render, Railway, PythonAnywhere, etc.)
+    # - ver el chequeo en app/__init__.py:create_app() que hace fallar
+    # el arranque si en producción se coló el default inseguro de acá
+    # abajo (NO se puede chequear en el cuerpo de esta clase: el cuerpo
+    # de una clase se ejecuta al importar el módulo, sin importar cuál
+    # config vaya a usarse en definitiva - un "raise" acá adentro
+    # tiraría abajo hasta el arranque en desarrollo).
+
+    # Cookie "Secure": el navegador nunca la manda por HTTP, solo por
+    # HTTPS. Va SOLO acá (no en Config, la clase base) porque en
+    # desarrollo local se corre por http://127.0.0.1 sin HTTPS - si
+    # esta bandera estuviera activa ahí, el navegador directamente no
+    # guardaría la cookie y el login dejaría de funcionar en local.
+    SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
 
 
 config_por_nombre = {

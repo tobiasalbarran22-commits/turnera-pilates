@@ -9,18 +9,43 @@ Flask como una variable global, la creamos DENTRO de una función
 
 import os
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-from config import config_por_nombre
+from config import config_por_nombre, SECRET_KEY_DEV_DEFAULT
 from app.extensions import db, login_manager, bcrypt, csrf
 
 
 def create_app(config_name=None):
     app = Flask(__name__, instance_relative_config=True)
 
+    # Render (donde se despliega esta app) termina el HTTPS en su propio
+    # proxy y nos reenvía la request como HTTP simple, con un header
+    # "X-Forwarded-Proto: https" avisando cuál era el protocolo real. Sin
+    # este middleware, Flask no confía en ese header y cree que TODAS las
+    # requests son HTTP - lo cual rompería el chequeo de HSTS de más
+    # abajo y cualquier otra lógica que dependa de saber si la conexión
+    # es segura. No agrega una dependencia nueva: ProxyFix ya viene con
+    # Werkzeug (que Flask ya usa por dentro).
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+
     # Si no se especifica, usamos la variable de entorno FLASK_ENV,
     # y si tampoco existe, "default" (desarrollo).
     config_name = config_name or os.environ.get("FLASK_ENV", "default")
     app.config.from_object(config_por_nombre[config_name])
+
+    # En producción, jamás tiene que arrancar la app firmando
+    # cookies/CSRF con el SECRET_KEY de desarrollo (hardcodeado en
+    # config.py para que sea cómodo arrancar en local) - mejor que ni
+    # arranque a que quede corriendo con una clave conocida. Este
+    # chequeo va ACÁ (no en el cuerpo de ProductionConfig) porque el
+    # cuerpo de una clase se ejecuta al importar el módulo sin importar
+    # qué config se vaya a usar en definitiva - hacerlo ahí tiraría
+    # abajo también el arranque en desarrollo. En Render esto no
+    # cambia nada: render.yaml ya genera un SECRET_KEY real
+    # automáticamente (generateValue: true), la variable de entorno
+    # siempre está presente ahí.
+    if config_name == "production" and app.config["SECRET_KEY"] == SECRET_KEY_DEV_DEFAULT:
+        raise RuntimeError("SECRET_KEY debe estar definida por variable de entorno en producción.")
 
     # Nos aseguramos de que exista la carpeta "instance" (ahí vive
     # el archivo turnera.db de SQLite).
@@ -86,6 +111,27 @@ def create_app(config_name=None):
         from flask import request
         if request.blueprint in ("admin", "alumno", "auth"):
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        return response
+
+    @app.after_request
+    def _headers_de_seguridad(response):
+        # Headers HTTP de seguridad, en todas las respuestas. Ninguno de
+        # estos cambia nada visible ni de comportamiento: son
+        # instrucciones para el NAVEGADOR sobre cómo tratar la
+        # respuesta, no algo que la página use o dependa de.
+        #
+        # OJO: a propósito no incluye Content-Security-Policy. El sitio
+        # usa bastante style="" y algunos <script> inline en las
+        # plantillas - una CSP que restrinja eso rompería la página tal
+        # como está, y una CSP que lo permita todo ("unsafe-inline") no
+        # suma protección real. Se prioriza no romper nada.
+        from flask import request
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        if request.is_secure:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
 
     return app

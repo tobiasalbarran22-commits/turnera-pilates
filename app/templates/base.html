@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Refuerzo de robots.txt: estas páginas requieren login, no
+         tiene sentido que ningún buscador las indexe (y si alguien
+         comparte un link privado por accidente, esta etiqueta evita
+         que igual termine en resultados de búsqueda). -->
+    <meta name="robots" content="noindex, nofollow">
     <title>{% block title %}Turnera{% endblock %} · Benincasa Pilates</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
