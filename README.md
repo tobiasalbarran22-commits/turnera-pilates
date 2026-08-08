@@ -314,31 +314,28 @@ la pestaña "Logs" de ese mismo servicio.
 Cada vez que hagas `git push` a `main`, Render vuelve a desplegar solo
 con los cambios nuevos, sin tocar los datos del disco persistente.
 
-## Aparecer en Google ("pilates villa santa rita" / "pilates villa del parque")
+## Aparecer en Google ("pilates villa santa rita")
+
+El estudio decidió que la página (título, `<h1>`, textos, datos
+estructurados) mencione **únicamente Villa Santa Rita** — ningún otro
+barrio, ni siquiera adentro del JSON-LD que no se ve en pantalla. Antes
+hubo una versión que también nombraba los barrios linderos (Villa del
+Parque, Monte Castro, etc.) con una sección "Zonas" dedicada; se sacó a
+pedido del estudio y no queda rastro de eso en el código actual.
 
 ### Lo que ya está hecho en el código
 
-- **Título, descripción y `<h1>` apuntados a esas dos búsquedas.** El
-  `<h1>` dice ahora *"Pilates reformer en Villa Santa Rita"* en vez de
-  solo el nombre del estudio: para Google, el `<h1>` es la declaración
-  de qué es la página, y nadie busca "benincasa" — buscan el servicio y
-  el barrio.
-- **Sección "Zonas"** (`templates/public/secciones/zonas.html`) con los
-  barrios cercanos escritos como texto visible, no solo adentro de los
-  datos estructurados. Es el cambio que hace posible aparecer en
-  "pilates villa del parque": antes esas palabras no estaban en ninguna
-  parte del texto de la página.
-- **Preguntas frecuentes** que responden literalmente esas búsquedas
-  ("¿Hacen pilates reformer en Villa Santa Rita?", "Vivo en Villa del
-  Parque, ¿me queda cerca?"), y que Google puede mostrar desplegadas en
-  los resultados.
-- **Datos estructurados (schema.org) ampliados**: dirección, teléfono,
-  equipo, reseñas, zona de cobertura, link al mapa, servicio ofrecido y
-  —si se cargan las variables— coordenadas y horarios de atención.
+- **Título, descripción y datos estructurados** apuntados a "pilates
+  villa santa rita" — la única búsqueda que la página persigue.
+- **Preguntas frecuentes** que responden literalmente esa búsqueda
+  ("¿Hacen pilates reformer en Villa Santa Rita?"), y que Google puede
+  mostrar desplegadas en los resultados.
+- **Datos estructurados (schema.org)**: dirección, teléfono, equipo,
+  reseñas, link al mapa, servicio ofrecido y —si se cargan las
+  variables— coordenadas y horarios de atención.
 - **Imagen de previsualización** propia de 1200x630
   (`static/img/og-benincasa-pilates.jpg`) para cuando se comparte el
-  link por WhatsApp o Instagram. Antes se compartía la foto vertical del
-  estudio con las medidas mal declaradas, y varias apps la descartaban.
+  link por WhatsApp o Instagram.
 - **Favicon propio** (`static/img/favicon.svg`): el iconito que Google
   muestra al lado de cada resultado en celular.
 - **Redirección al dominio canónico**, y `robots.txt` / `sitemap.xml` /
@@ -346,33 +343,26 @@ con los cambios nuevos, sin tocar los datos del disco persistente.
 - **Páginas de error propias** (400/403/404/500) con el código HTTP
   correcto, para que un link viejo no le devuelva basura a Google.
 
-### Lo que falta, y solo lo puede hacer el estudio
+### Lo que pesa más que el código: la ficha de Google Business Profile
 
-Esto pesa **más** que todo lo anterior. Para búsquedas del tipo "pilates
-+ barrio", Google muestra arriba de todo un mapa con tres negocios (el
-"local pack"), y quién entra ahí lo decide la **ficha de Google Business
-Profile**, no la página web. Por orden de impacto:
+Para la búsqueda "pilates villa santa rita", Google muestra arriba de
+todo un mapa con tres negocios (el "local pack"), y quién entra ahí lo
+decide la **ficha de Google Business Profile**, no la página web:
 
-1. **Crear o reclamar la ficha en Google Business Profile**
-   ([business.google.com](https://business.google.com)): categoría
-   "Estudio de pilates", dirección exacta, teléfono, horarios, fotos
-   reales y el link a este sitio. Sin ficha verificada, el estudio
-   directamente no puede aparecer en ese mapa.
-2. **Pedirle reseñas a las alumnas actuales.** La cantidad de reseñas y
-   la frecuencia con que llegan reseñas nuevas es de lo que más mueve la
-   posición en el local pack.
-3. **Dar de alta el sitio en [Google Search
-   Console](https://search.google.com/search-console)** y mandar el
-   `sitemap.xml`. Es gratis, y es la única forma de ver por qué
-   búsquedas te encuentra la gente de verdad.
-4. **Comprar un dominio propio** (ej. `benincasapilates.com.ar`). Un
-   `.onrender.com` transmite bastante menos confianza que un dominio
-   propio. Cuando lo tengan, cargar `SITIO_URL`.
-5. **Completar las variables opcionales** de `.env` / Render:
-   `SITIO_URL`, `ESTUDIO_LATITUD` + `ESTUDIO_LONGITUD` y
-   `HORARIOS_ATENCION`. Están vacías a propósito: el código no inventa
-   las coordenadas ni los horarios del estudio. `.env.example` explica
-   de dónde sacar cada dato.
+1. **Ficha verificada en Google Business Profile**
+   ([business.google.com](https://business.google.com)), con categoría
+   "Estudio de pilates", dirección exacta, horarios reales y fotos.
+2. **Reseñas activas.** La cantidad y la frecuencia con que llegan
+   reseñas nuevas es de lo que más mueve la posición en el local pack.
+3. **Dado de alta en [Google Search
+   Console](https://search.google.com/search-console)**, con el
+   `sitemap.xml` enviado.
+4. **Dominio propio** en vez de un `.onrender.com` (más confianza para
+   Google y para quien ve el link), con `SITIO_URL` configurado.
+5. **Variables opcionales** de `.env` / Render: `ESTUDIO_LATITUD` +
+   `ESTUDIO_LONGITUD` y `HORARIOS_ATENCION`. Están vacías a propósito si
+   no se cargaron: el código no inventa coordenadas ni horarios del
+   estudio. `.env.example` explica de dónde sacar cada dato.
 6. **Que el nombre, la dirección y el teléfono sean idénticos** en la
    web, en Google Maps y en Instagram, hasta en cómo se abrevia la
    calle. Google cruza esos datos para confirmar que es el mismo
@@ -380,18 +370,9 @@ Profile**, no la página web. Por orden de impacto:
 
 ### Una aclaración honesta sobre "salir primero"
 
-Nadie —ni Google— puede garantizar el primer puesto. Lo que sí se puede
-decir: con la ficha de Google verificada, reseñas activas y la página
-como quedó, el estudio compite en igualdad de condiciones por esas dos
-búsquedas, que además son de barrio y tienen poca competencia. Los
-cambios no son inmediatos: Google suele tardar entre unas semanas y un
-par de meses en reflejarlos.
-
-Lo que **no** hay que hacer, aunque parezca tentador: crear una página
-por barrio ("pilates en villa del parque", "pilates en monte castro"…)
-cambiando solo el nombre. Google llama a eso *doorway pages*, las
-detecta y las penaliza. Por eso los barrios están todos en una sola
-página, con información real de cada uno.
+Nadie —ni Google— puede garantizar el primer puesto. Los cambios no son
+inmediatos: Google suele tardar entre unas semanas y un par de meses en
+reflejarlos.
 
 ## Estado actual
 

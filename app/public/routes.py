@@ -51,44 +51,7 @@ PAGINAS_PUBLICAS = [
     # antipatrón de SEO, Google desconfía de un sitemap donde todo dice
     # "recién cambiado" siempre). Se actualiza a mano cuando cambie
     # algo de la landing.
-    {"endpoint": "public.index", "changefreq": "monthly", "priority": "1.0", "lastmod": "2026-08-07"},
-]
-
-# Barrios desde los que viene (o puede venir) gente al estudio. Una
-# sola lista que alimenta TRES cosas a la vez:
-#   1. La sección "Zonas" visible en la página.
-#   2. El areaServed del JSON-LD.
-#   3. Nada más - y eso es a propósito.
-#
-# Por qué la sección visible importa: hasta ahora los barrios linderos
-# existían SOLO adentro del JSON-LD. Google usa los datos
-# estructurados para entender e ilustrar una página, pero lo que
-# rankea es el CONTENIDO que la persona ve. Una búsqueda como "pilates
-# villa del parque" difícilmente encuentre una página donde esas tres
-# palabras juntas no aparecen escritas en ningún lado del texto.
-#
-# "cerca" separa el barrio donde está el estudio de los de alrededor,
-# para poder redactar la sección sin decir que estamos en un barrio
-# donde no estamos (eso sería falso, y además Google penaliza las
-# páginas que fingen tener sede en cada barrio que nombran).
-BARRIOS = [
-    {"nombre": "Villa Santa Rita", "cerca": False,
-     "detalle": "Acá está el estudio, sobre Campana al 1400."},
-    {"nombre": "Villa del Parque", "cerca": True,
-     "detalle": "Barrio lindero: se llega en pocos minutos cruzando avenida San Martín."},
-    {"nombre": "Monte Castro", "cerca": True,
-     "detalle": "A pocas cuadras, del otro lado de avenida Álvarez Jonte."},
-    {"nombre": "Villa General Mitre", "cerca": True,
-     "detalle": "Lindero por el este, a minutos caminando."},
-    {"nombre": "Floresta", "cerca": True,
-     "detalle": "Cruzando avenida Gaona, hacia el sur."},
-    # La lista se mantiene corta a propósito: solo barrios linderos o a
-    # minutos reales. Estirarla con medio mapa de la ciudad ("pilates
-    # en Caballito", "en Devoto"...) para captar más búsquedas es
-    # justamente lo que Google detecta como contenido inflado, y
-    # termina restando en vez de sumar.
-    {"nombre": "La Paternal", "cerca": True,
-     "detalle": "Cerca por avenida San Martín, unos minutos en colectivo."},
+    {"endpoint": "public.index", "changefreq": "monthly", "priority": "1.0", "lastmod": "2026-08-08"},
 ]
 
 # El equipo del estudio: una sola fuente de verdad que alimenta tanto
@@ -145,25 +108,16 @@ PREGUNTAS_FRECUENTES = [
     },
     {
         "pregunta": "¿Dónde queda el estudio?",
-        "respuesta": "En Campana 1495, Villa Santa Rita, Ciudad Autónoma de Buenos Aires. Es a pocas cuadras "
-                     "de Villa del Parque, Monte Castro, Villa General Mitre y La Paternal.",
+        "respuesta": "En Campana 1495, Villa Santa Rita, Ciudad Autónoma de Buenos Aires.",
     },
-    # Esta pregunta y la siguiente no son relleno: son literalmente las
-    # dos búsquedas por las que queremos que aparezca la página
-    # ("pilates villa santa rita", "pilates villa del parque"),
-    # respondidas de verdad. Google le da mucho peso a que la página
-    # conteste la pregunta que la persona escribió en el buscador, y de
-    # paso son cosas que alguien del barrio efectivamente se pregunta.
+    # No es relleno: es literalmente la búsqueda por la que queremos
+    # que aparezca la página ("pilates villa santa rita"), respondida
+    # de verdad. Google le da mucho peso a que la página conteste la
+    # pregunta que la persona escribió en el buscador.
     {
         "pregunta": "¿Hacen pilates reformer en Villa Santa Rita?",
         "respuesta": "Sí. El estudio está en Villa Santa Rita, sobre Campana al 1400, y todas las clases son "
                      "de pilates reformer en grupos de hasta 5 personas.",
-    },
-    {
-        "pregunta": "Vivo en Villa del Parque, ¿me queda cerca?",
-        "respuesta": "Sí. Villa del Parque es barrio lindero a Villa Santa Rita: se llega en pocos minutos "
-                     "cruzando avenida San Martín. Varias de nuestras alumnas vienen de ahí, y también de "
-                     "Monte Castro, Villa General Mitre, Floresta y La Paternal.",
     },
     {
         "pregunta": "¿Qué es el pilates reformer y en qué se diferencia del pilates en el piso?",
@@ -211,8 +165,7 @@ def _schema_negocio():
         "alternateName": "Pilates Benincasa",
         "description": (
             "Estudio de pilates reformer en Villa Santa Rita, CABA, con clases en grupos de hasta 5 personas "
-            "y seguimiento personalizado. A pocas cuadras de Villa del Parque, Monte Castro, "
-            "Villa General Mitre y La Paternal."
+            "y seguimiento personalizado."
         ),
         "image": url_absoluta("static", filename="img/estudio-interior.jpg"),
         "logo": url_absoluta("static", filename="img/favicon.svg"),
@@ -234,14 +187,12 @@ def _schema_negocio():
         # negocio en Maps (que es lo que decide el "local pack", el
         # mapita con 3 negocios que sale arriba de todo).
         "hasMap": f"https://www.google.com/maps/search/?api=1&query={quote(f'Benincasa Pilates, {direccion}')}",
-        # areaServed: los barrios de alrededor. Le dice a Google "el
-        # negocio también atiende esta zona". OJO: esto SOLO no alcanza
-        # para rankear en "pilates villa del parque" - por eso los
-        # mismos barrios ahora también están escritos como texto
-        # visible en la página (ver BARRIOS y secciones/zonas.html).
+        # areaServed: a pedido del estudio, la página (y sus datos
+        # estructurados) solo mencionan Villa Santa Rita - ningún otro
+        # barrio, ni siquiera acá adentro del JSON-LD que no se ve en
+        # pantalla.
         "areaServed": [
-            {"@type": "Place", "name": f"{b['nombre']}, Ciudad Autónoma de Buenos Aires"}
-            for b in BARRIOS
+            {"@type": "Place", "name": "Villa Santa Rita, Ciudad Autónoma de Buenos Aires"},
         ],
         "sameAs": [current_app.config["INSTAGRAM_URL"]],
         "employee": [
@@ -394,7 +345,6 @@ def index():
         resenas=RESENAS,
         calificacion_promedio=CALIFICACION_PROMEDIO,
         preguntas=PREGUNTAS_FRECUENTES,
-        barrios=BARRIOS,
         datos_estructurados=[_schema_negocio(), _schema_faq()],
         **_contexto_estudio(),
     )

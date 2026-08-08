@@ -1,18 +1,21 @@
-{# El <h1> es el título más importante de la página: para Google es la
-   declaración de "de qué se trata esto". Antes decía solo "Benincasa
-   Pilates" - le contaba a Google el NOMBRE del negocio, pero no QUÉ
-   hace ni DÓNDE, que es justo lo que la gente escribe en el buscador
-   ("pilates villa santa rita", no "benincasa"). Ahora el h1 dice el
-   servicio + el barrio, y la marca pasa arriba, al eyebrow: quien nos
-   busca por nombre nos encuentra igual (está en el <title>, en el
-   nav, en el footer y en los datos estructurados), y quien busca por
-   barrio encuentra exactamente lo que buscaba. #}
+{# El head (hero) es pedido explícito del estudio: que diga
+   ÚNICAMENTE "Benincasa Pilates" - la marca primero, sin el
+   servicio/barrio metido en el título. La foto del estudio pasa acá
+   de fondo, detrás del texto (antes vivía en la sección "Quiénes
+   somos"), con un velo oscuro encima para que el texto claro se siga
+   leyendo bien sobre cualquier parte de la imagen. Al hacer scroll,
+   la foto se desplaza un poco más lento que el resto de la página
+   (efecto "parallax" clásico) - ver .landing-hero-fondo img en
+   landing.css y el script de parallax en base_publica.html. #}
 <section class="landing-hero">
+    <div class="landing-hero-fondo" aria-hidden="true">
+        <img src="{{ url_for('static', filename='img/estudio-interior.jpg') }}"
+             alt="" loading="eager" fetchpriority="high" decoding="async" data-parallax>
+    </div>
     <div class="envoltura">
-        <span class="eyebrow reveal" style="--delay:.05s">Benincasa Pilates · Villa Santa Rita, CABA</span>
-        <h1 class="reveal" style="--delay:.1s">Pilates reformer en Villa Santa Rita</h1>
+        <h1 class="reveal" style="--delay:.1s">Benincasa Pilates</h1>
         <p class="lema reveal" style="--delay:.2s" aria-label="Mejorando vidas, un movimiento a la vez."><span class="lema-texto" data-escribir aria-hidden="true">Mejorando vidas, un movimiento a la vez.</span></p>
-        <p class="sub reveal" style="--delay:.3s">Clases en grupos de hasta 5 personas, a minutos de Villa del Parque y Monte Castro. Te acompañamos de cerca, clase a clase, en un espacio pensado para que cada movimiento se sienta tuyo.</p>
+        <p class="sub reveal" style="--delay:.3s">Te acompañamos de cerca, clase a clase, en un espacio pensado para que cada movimiento se sienta tuyo.</p>
         <div class="fila-botones reveal" style="--delay:.4s">
             <a href="{{ url_for('auth.login') }}" class="boton-cta boton-cta-primario">Tomar un turno</a>
             <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-secundario">Escribinos por WhatsApp</a>

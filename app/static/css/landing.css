@@ -222,8 +222,12 @@ body.landing {
 
 /* ---------- Hero ---------- */
 .landing-hero {
-    background: var(--stone);
-    color: var(--ink);
+    position: relative;
+    overflow: hidden;
+    /* El texto ahora vive sobre una foto (ver .landing-hero-fondo), no
+       sobre el fondo crema del resto del sitio - por eso pasa a usar
+       tonos claros en vez de --ink/--muted. */
+    color: var(--paper);
     padding: 6rem 0;
     text-align: center;
     /* Casi toda la pantalla en la primera vista, sin forzar el 100vh
@@ -234,17 +238,41 @@ body.landing {
     align-items: center;
     justify-content: center;
 }
-.landing-hero .envoltura {
-    width: 100%;
+/* Foto de fondo del hero, detrás de todo el texto. scale(1.15) en la
+   imagen dejar margen de sobra para el desplazamiento del parallax
+   (ver más abajo) sin que se llegue a ver un borde vacío. */
+.landing-hero-fondo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
 }
-.landing-hero .eyebrow {
-    font-family: var(--f-mono);
-    font-size: .72rem;
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    color: var(--sage);
-    display: block;
-    margin-bottom: 1rem;
+.landing-hero-fondo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* --parallax lo actualiza el script de base_publica.html en cada
+       scroll: la foto se mueve un poco más lento que el resto de la
+       página, dando sensación de profundidad. Con
+       prefers-reduced-motion el script nunca corre y la variable
+       queda siempre en 0px (ver el @media de más abajo). */
+    transform: scale(1.15) translateY(var(--parallax, 0px));
+    will-change: transform;
+}
+/* Velo oscuro sobre la foto: sin esto, el texto claro (necesario para
+   leerse bien contra CUALQUIER parte de la imagen) desaparece contra
+   las zonas claras de la foto (paredes, ventanas). Un poco más oscuro
+   abajo que arriba porque ahí vive la fila de botones, que necesita
+   más contraste que el título. */
+.landing-hero-fondo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(27, 34, 51, .6), rgba(27, 34, 51, .8));
+}
+.landing-hero .envoltura {
+    position: relative;
+    z-index: 1;
+    width: 100%;
 }
 .landing-hero h1 {
     font-family: var(--f-display);
@@ -253,17 +281,13 @@ body.landing {
     line-height: 1.08;
     letter-spacing: -0.01em;
     margin: 0 auto .9rem;
-    /* 16ch, no 20: el h1 pasó de ser el nombre del estudio a ser
-       "Pilates reformer en Villa Santa Rita" (ver secciones/hero.html,
-       ahí está el porqué). Con 20ch quedaba una segunda línea con una
-       sola palabra colgando; con 16 corta parejo en dos líneas. */
-    max-width: 16ch;
+    max-width: 20ch;
 }
 .landing-hero .lema {
     font-family: var(--f-display);
     font-style: italic;
     font-size: clamp(1.05rem, 2vw, 1.3rem);
-    color: var(--sage-deep);
+    color: var(--sage-tint);
     margin: 0 auto 1.4rem;
 }
 /* Efecto "máquina de escribir": el lema se escribe letra a letra con
@@ -286,17 +310,25 @@ body.landing {
     height: 1em;
     margin-left: 2px;
     vertical-align: text-bottom;
-    background: var(--sage-deep);
+    background: var(--sage-tint);
     animation: parpadeo-cursor .8s step-end infinite;
 }
 @keyframes parpadeo-cursor { 50% { opacity: 0; } }
 .landing-hero .sub {
     font-size: 1.02rem;
-    color: var(--muted);
+    color: rgba(251, 247, 238, .82);
     max-width: 46ch;
     margin: 0 auto 2.2rem;
 }
 .landing-hero .fila-botones { justify-content: center; }
+/* El botón secundario (borde + texto, sin relleno) usa --ink en el
+   resto del sitio: sobre la foto oscura del hero eso es invisible.
+   Se pisa acá adentro, solo para esta sección. */
+.landing-hero .boton-cta-secundario {
+    color: var(--paper);
+    border-color: rgba(251, 247, 238, .5);
+}
+.landing-hero .boton-cta-secundario:hover { border-color: var(--paper); }
 
 /* ---------- Secciones generales ---------- */
 .landing-seccion {
@@ -332,22 +364,6 @@ body.landing {
     font-size: 1rem;
 }
 
-/* ---------- Frase / filosofía ---------- */
-.landing-frase .envoltura {
-    max-width: 720px;
-    text-align: center;
-}
-.landing-frase p {
-    font-family: var(--f-display);
-    font-style: italic;
-    font-weight: 400;
-    font-size: clamp(1.35rem, 3.2vw, 2.05rem);
-    line-height: 1.55;
-    letter-spacing: -0.01em;
-    color: var(--ink-soft);
-    margin: 0;
-}
-
 /* ---------- Quiénes somos ---------- */
 .landing-texto {
     max-width: 640px;
@@ -375,22 +391,6 @@ body.landing {
     padding: .9rem 1.25rem;
     line-height: 1.5;
 }
-
-.landing-foto {
-    max-width: 900px;
-    margin: 2.75rem auto 0;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 1px 2px rgba(27, 25, 18, .08), 0 0 0 1px var(--line-soft);
-}
-.landing-foto img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    transition: transform .6s ease;
-}
-.landing-foto:hover img { transform: scale(1.045); }
 
 /* ---------- Valores / diferenciales ---------- */
 .landing-valores {
@@ -489,76 +489,6 @@ body.landing {
     height: 18px;
     vertical-align: -3px;
     margin-right: .5rem;
-}
-
-/* ---------- Zonas / barrios cercanos ---------- */
-/* Grilla de tarjetas chicas, una por barrio (ver
-   secciones/zonas.html). Se apoya en las mismas variables de color y
-   el mismo tratamiento de tarjeta que .landing-valor y .landing-resena
-   para que la sección nueva no se note pegada. */
-.landing-zonas {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-}
-.landing-zona {
-    background: var(--stone);
-    border-radius: 4px;
-    padding: 1.4rem 1.5rem;
-    box-shadow: 0 1px 2px rgba(27, 25, 18, .08), 0 0 0 1px var(--line-soft);
-    transition: transform .35s ease, box-shadow .35s ease;
-}
-.landing-zona:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(27, 25, 18, .1), 0 0 0 1px var(--line-soft);
-}
-.landing-zona-titulo {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    flex-wrap: wrap;
-    margin-bottom: .45rem;
-}
-.landing-zona h3 {
-    font-family: var(--f-display);
-    font-weight: 600;
-    font-size: 1.02rem;
-    margin: 0;
-    letter-spacing: -0.01em;
-}
-.landing-zona p {
-    margin: 0;
-    color: var(--muted);
-    font-size: .92rem;
-    line-height: 1.55;
-}
-/* La tarjeta del barrio donde el estudio realmente está: se marca
-   distinto a propósito, para que quede claro de un vistazo que los
-   otros son barrios CERCANOS y no sedes. */
-.landing-zona.es-sede {
-    background: var(--paper);
-    box-shadow: 0 1px 2px rgba(27, 25, 18, .08), 0 0 0 1.5px var(--sage);
-}
-.landing-zona .etiqueta {
-    font-family: var(--f-mono);
-    font-size: .62rem;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--sage-deep);
-    border: 1px solid var(--sage);
-    border-radius: 999px;
-    padding: .18rem .5rem;
-    white-space: nowrap;
-}
-.landing-zonas-nota {
-    text-align: center;
-    color: var(--muted);
-    font-size: .95rem;
-    margin: 2.25rem auto 0;
-    max-width: 52ch;
 }
 
 /* ---------- Ubicación / mapa ---------- */
@@ -721,14 +651,8 @@ body.landing {
 .landing-footer a:hover { border-color: var(--ink); }
 .landing-footer .enlaces { display: flex; gap: 1.25rem; flex-wrap: wrap; justify-content: center; }
 
-/* Las zonas son tarjetas cortas: aguantan 2 columnas en tablet, donde
-   las de valores/reseñas ya necesitan una sola. */
-@media (max-width: 980px) {
-    .landing-zonas { grid-template-columns: repeat(2, 1fr); }
-}
-
 @media (max-width: 780px) {
-    .landing-valores, .landing-equipo, .landing-resenas, .landing-zonas { grid-template-columns: 1fr; }
+    .landing-valores, .landing-equipo, .landing-resenas { grid-template-columns: 1fr; }
     .landing-hero { padding: 4rem 0; min-height: 90vh; }
     .landing-seccion { padding: 5rem 0; }
     .landing-mapa { aspect-ratio: 4 / 5; }
@@ -744,7 +668,6 @@ body.landing {
     .landing-profe .avatar,
     .landing-nav,
     .landing-nav a::after,
-    .landing-foto img,
     .boton-flotante { transition: none; }
     .reveal {
         /* El script también detecta esta preferencia y agrega
