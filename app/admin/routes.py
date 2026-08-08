@@ -130,7 +130,7 @@ def usuario_editar(usuario_id):
         # Si el nuevo plan tiene MENOS clases por mes que el anterior,
         # los horarios fijos que el alumno tenía asignados dejan de
         # tener sentido (fueron pensados para un cupo mensual más
-        # grande - ver dias_fijos_permitidos en admin/services.py) y
+        # grande - ver horarios_fijos_permitidos en admin/services.py) y
         # podrían volver a generar el mismo desfasaje de saldo que ya
         # arreglamos ahí. En vez de dejarlos "colgados", se los
         # quitamos de una: cancela sus turnos futuros por esos

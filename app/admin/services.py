@@ -187,14 +187,22 @@ def _reservar_fijos_de_horario(clase, horario):
             enviar_aviso_ultima_clase(usuario)
 
 
-def dias_fijos_permitidos(usuario):
+def horarios_fijos_permitidos(usuario):
     """
-    Cantidad máxima de DÍAS DISTINTOS por semana que un alumno puede
-    tener como horario fijo, según cuántas clases por mes tiene su
-    plan (asumiendo ~4 semanas por mes: 4 clases/mes -> 1 día/semana,
-    8 -> 2, 12 -> 3, 16 -> 4). Evita que el admin cargue, por error,
-    más días fijos de los que el plan alcanza a cubrir - algo que
-    hoy fallaba en silencio (ver asignar_horario_fijo más abajo).
+    Cantidad máxima de HORARIOS FIJOS (día + hora semanal) que un
+    alumno puede tener asignados a la vez, según cuántas clases por
+    mes tiene su plan (asumiendo ~4 semanas por mes: 4 clases/mes ->
+    1 horario/semana, 8 -> 2, 12 -> 3, 16 -> 4). Evita que el admin
+    cargue, por error, más horarios fijos de los que el plan alcanza a
+    cubrir - algo que hoy fallaba en silencio (ver asignar_horario_fijo
+    más abajo).
+
+    Cuenta HORARIOS, no días: dos horarios fijos el mismo día (ej.
+    lunes 9hs y lunes 18hs) son dos clases por semana, no una, y cada
+    uno gasta su propio crédito mensual - contar por día distinto (como
+    hacía la versión anterior de esta función) dejaba colar un segundo
+    horario fijo el mismo día sin que sumara al límite, porque el "día"
+    ya estaba usado.
 
     Devuelve None si el alumno no tiene plan asignado (no restringimos:
     es una situación rara que el admin debería resolver aparte).
@@ -236,21 +244,21 @@ def asignar_horario_fijo(usuario, horario):
     (esa clase puntual ya está llena con otros alumnos).
 
     Levanta ValueError si asignar este horario haría que el alumno
-    supere el máximo de días fijos por semana que permite su plan
-    (ver dias_fijos_permitidos).
+    supere el máximo de horarios fijos por semana que permite su plan
+    (ver horarios_fijos_permitidos).
     """
     inscripcion = InscripcionFija.query.filter_by(usuario_id=usuario.id, horario_id=horario.id).first()
     ya_activa = inscripcion is not None and inscripcion.activo
 
     if not ya_activa:
-        dias_actuales = {
-            i.horario.dia_semana for i in usuario.inscripciones_fijas
+        cantidad_actual = sum(
+            1 for i in usuario.inscripciones_fijas
             if i.activo and i.horario_id != horario.id
-        }
-        limite = dias_fijos_permitidos(usuario)
-        if limite is not None and horario.dia_semana not in dias_actuales and len(dias_actuales) >= limite:
+        )
+        limite = horarios_fijos_permitidos(usuario)
+        if limite is not None and cantidad_actual >= limite:
             raise ValueError(
-                f"{usuario.nombre_completo} ya tiene {limite} día(s) fijo(s) por semana asignado(s), "
+                f"{usuario.nombre_completo} ya tiene {limite} horario(s) fijo(s) por semana asignado(s), "
                 f"el máximo que permite su plan \"{usuario.plan.nombre}\". Quitale un horario fijo antes "
                 "de agregar uno nuevo, o asignale un plan con más clases por mes."
             )
