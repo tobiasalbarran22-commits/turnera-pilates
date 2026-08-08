@@ -16,12 +16,22 @@ from app import create_app
 from app.extensions import db
 from app.models import Usuario, Plan
 from app.db_constraints import crear_restricciones_concurrencia
+from app.db_migrations import aplicar_migraciones_pendientes
 
 app = create_app()
 
 with app.app_context():
     db.create_all()
     print("Tablas creadas correctamente.")
+
+    # create_all() crea las TABLAS que faltan, pero no agrega columnas
+    # nuevas a una tabla que ya existía. Este script es el que corre
+    # Render en cada arranque (ver render.yaml), así que tiene que
+    # aplicar también las columnas nuevas - si no, la primera consulta
+    # después de un deploy con un modelo cambiado falla con
+    # "no such column" sobre la base real. Ver app/db_migrations.py.
+    agregadas = aplicar_migraciones_pendientes(db.engine)
+    print(f"Migraciones de columnas verificadas ({agregadas} agregada/s).")
 
     # db.create_all() solo crea las tablas que salen de los modelos de
     # SQLAlchemy - el índice único parcial y los triggers que evitan

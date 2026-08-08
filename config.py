@@ -133,6 +133,45 @@ class Config:
         "DIRECCION_ESTUDIO", "Campana 1495, Villa Santa Rita, CABA, Argentina"
     )
 
+    # --- SEO ---
+    # SITIO_URL: la dirección DEFINITIVA del sitio, sin barra final
+    # (ej: "https://www.benincasapilates.com.ar"). Importa más de lo
+    # que parece: si el mismo contenido se puede abrir en dos dominios
+    # distintos (el .onrender.com y el propio, o con y sin "www"),
+    # Google lo ve como dos sitios con contenido duplicado y reparte
+    # entre los dos la autoridad que debería concentrarse en uno solo.
+    # Con esto definido, la app arma SIEMPRE los links absolutos
+    # (canonical, sitemap, Open Graph, JSON-LD) apuntando a esta
+    # dirección y redirige con 301 cualquier otro dominio hacia ella
+    # (ver app/__init__.py). Si queda vacío, cada URL absoluta se arma
+    # con el dominio por el que entró la visita, que es lo que hacía
+    # antes: funciona, pero no protege contra el duplicado.
+    SITIO_URL = os.environ.get("SITIO_URL", "").rstrip("/")
+
+    # Coordenadas exactas del estudio, para los datos estructurados
+    # (schema.org GeoCoordinates). Google las usa para el "local pack"
+    # (el mapita con los 3 negocios que aparece arriba de todo en
+    # búsquedas como "pilates villa santa rita"). Se sacan abriendo el
+    # estudio en Google Maps, click derecho sobre el punto exacto: el
+    # primer número que aparece es la latitud y el segundo la longitud.
+    # Se dejan VACÍAS a propósito: un par de coordenadas inventadas o
+    # aproximadas es peor que ninguna (le diría a Google que el estudio
+    # está en una cuadra donde no está). Si están vacías, el bloque
+    # "geo" simplemente no se incluye.
+    ESTUDIO_LATITUD = os.environ.get("ESTUDIO_LATITUD", "")
+    ESTUDIO_LONGITUD = os.environ.get("ESTUDIO_LONGITUD", "")
+
+    # Horarios de atención, para el mismo bloque de datos
+    # estructurados (Google puede mostrar "Abierto ahora / Cierra a las
+    # X" en los resultados). Formato: cada línea es
+    # "Dia[,Dia...] HH:MM-HH:MM", con los días en inglés porque es lo
+    # que espera schema.org (Monday, Tuesday, Wednesday, Thursday,
+    # Friday, Saturday, Sunday). Ejemplo de un valor real:
+    #     "Monday,Tuesday,Wednesday,Thursday,Friday 08:00-21:00|Saturday 09:00-13:00"
+    # Vacío por defecto, por la misma razón que las coordenadas: no
+    # inventamos horarios que el estudio no confirmó.
+    HORARIOS_ATENCION = os.environ.get("HORARIOS_ATENCION", "")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

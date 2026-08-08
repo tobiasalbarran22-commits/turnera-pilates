@@ -8,11 +8,39 @@
        og:title, og:description y los de Twitter los reusan con
        self.bloque() en vez de repetir el texto, para que nunca queden
        desincronizados entre sí. #}
-    <title>{% block seo_title %}Benincasa Pilates | Estudio de Pilates Reformer en Villa Santa Rita, CABA{% endblock %}</title>
-    <meta name="description" content="{% block seo_description %}Clases de pilates reformer en grupos de hasta 5 personas, con atención personalizada, en Villa Santa Rita / Monte Castro, CABA. Reservá tu clase online o escribinos por WhatsApp.{% endblock %}">
-    <meta name="keywords" content="{% block seo_keywords %}pilates Villa Santa Rita, pilates Monte Castro, pilates Villa del Parque, pilates Paternal, pilates Floresta, pilates reformer CABA, estudio de pilates Villa Santa Rita, clases de pilates Monte Castro, pilates reformer grupos reducidos{% endblock %}">
-    <meta name="robots" content="index, follow">
+    {# El <title> es, junto con el <h1>, lo que más pesa para decidir
+       por qué búsqueda aparece una página - y es literalmente el
+       renglón azul que la persona lee en Google. Por eso arranca con
+       las dos búsquedas que queremos ganar ("pilates villa santa
+       rita" / "pilates villa del parque") y deja la marca al final:
+       quien busca la marca nos encuentra igual, quien busca el barrio
+       ve primero lo que buscaba. Entra completo en Google (~60-65
+       caracteres antes del corte con "..."). #}
+    <title>{% block seo_title %}Pilates en Villa Santa Rita y Villa del Parque | Benincasa Pilates{% endblock %}</title>
+    {# La descripción no cambia el ranking, pero sí cuánta gente hace
+       click (y eso Google lo mide). Menos de 155 caracteres para que
+       no se corte, con el barrio, el diferencial concreto (grupos de
+       5) y una acción clara. #}
+    <meta name="description" content="{% block seo_description %}Estudio de pilates reformer en Villa Santa Rita, CABA, a minutos de Villa del Parque y Monte Castro. Grupos de hasta 5 personas. Reservá por WhatsApp.{% endblock %}">
+    {# Google ignora "keywords" desde 2009. Se deja porque otros
+       buscadores menores todavía la leen y no molesta - pero que
+       quede claro que NO es lo que hace rankear: eso lo hace el texto
+       visible de la página (ver la sección "Zonas"). #}
+    <meta name="keywords" content="{% block seo_keywords %}pilates Villa Santa Rita, pilates Villa del Parque, pilates Monte Castro, pilates reformer CABA, estudio de pilates Villa Santa Rita, clases de pilates Villa del Parque, pilates Villa General Mitre, pilates Paternal, pilates Floresta, pilates reformer grupos reducidos{% endblock %}">
+    {# max-image-preview:large permite que Google muestre la foto del
+       estudio en grande en los resultados (sobre todo en celular);
+       sin esto muestra una miniatura o nada. max-snippet:-1 lo deja
+       usar todo el texto que le parezca del contenido. #}
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="{{ canonical_url }}">
+    <meta name="author" content="Benincasa Pilates">
+    <meta name="theme-color" content="#FBF7EE">
+
+    {# Google muestra el favicon al lado de cada resultado en celular:
+       tener uno propio hace que el resultado se vea de un negocio real
+       y no de una página cualquiera. #}
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/og-benincasa-pilates.jpg') }}">
 
     <!-- Open Graph / Facebook, WhatsApp, Instagram (previsualización al compartir el link) -->
     <meta property="og:type" content="website">
@@ -21,9 +49,16 @@
     <meta property="og:site_name" content="Benincasa Pilates">
     <meta property="og:title" content="{% block og_title %}{{ self.seo_title() }}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{{ self.seo_description() }}{% endblock %}">
+    {# 1200x630 es la medida que esperan WhatsApp, Facebook e
+       Instagram para una tarjeta de link grande. Estos dos números
+       TIENEN que coincidir con el archivo real (ver
+       img/og-benincasa-pilates.jpg): antes decían 1200x900 sobre una
+       foto que en realidad es 960x1280, y una medida declarada que no
+       coincide hace que varias apps descarten la imagen y muestren el
+       link pelado, sin foto. #}
     <meta property="og:image" content="{{ og_image_url }}">
     <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="900">
+    <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Sala de Benincasa Pilates con camillas reformer de madera">
 
     <!-- Twitter/X Card -->

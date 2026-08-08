@@ -225,12 +225,15 @@ def asignar_horario_fijo(usuario, horario):
     saldo, cuando llegan (ver _reservar_fijos_del_mes, llamada desde
     generar_clases_para_mes).
 
-    Devuelve (inscripcion, reservadas, saltadas_por_saldo) para que la
-    ruta pueda avisarle al admin si algo no se pudo reservar en vez de
-    fallar en silencio: antes, si el alumno tenía 0 de saldo en el
-    momento de la asignación, quedaba "asignado/a" en la grilla pero
-    sin ningún turno real, y el admin no se enteraba hasta que el
-    alumno se quejaba de no ver nada en "Mis turnos".
+    Devuelve (inscripcion, reservadas, saltadas_por_saldo,
+    saltadas_por_cupo) para que la ruta pueda avisarle al admin si algo
+    no se pudo reservar en vez de fallar en silencio: antes, si el
+    alumno tenía 0 de saldo en el momento de la asignación, quedaba
+    "asignado/a" en la grilla pero sin ningún turno real, y el admin no
+    se enteraba hasta que el alumno se quejaba de no ver nada en "Mis
+    turnos". Las dos causas van separadas porque se arreglan de forma
+    distinta: sin saldo se soluciona cargándole clases, sin cupo no
+    (esa clase puntual ya está llena con otros alumnos).
 
     Levanta ValueError si asignar este horario haría que el alumno
     supere el máximo de días fijos por semana que permite su plan
@@ -269,13 +272,17 @@ def asignar_horario_fijo(usuario, horario):
     ).all()
     reservadas = 0
     saltadas_por_saldo = 0
+    saltadas_por_cupo = 0
     for clase in clases_del_mes:
         if datetime.combine(clase.fecha, clase.hora_inicio) <= ahora:
             continue
         ya_reservada = Reserva.query.filter_by(
             usuario_id=usuario.id, clase_id=clase.id, estado="reservada"
         ).first()
-        if ya_reservada or not clase.tiene_cupo:
+        if ya_reservada:
+            continue
+        if not clase.tiene_cupo:
+            saltadas_por_cupo += 1
             continue
         # Cada intento va en su propio SAVEPOINT: si choca contra el
         # índice único parcial o el trigger de cupo de
@@ -291,10 +298,17 @@ def asignar_horario_fijo(usuario, horario):
                     estado="reservada", es_recuperacion=es_recuperacion,
                 ))
         except ValueError:
+            # consumir_clase() no encontró saldo de ningún tipo.
             saltadas_por_saldo += 1
             continue
         except IntegrityError:
-            saltadas_por_saldo += 1
+            # Chocó contra el índice único parcial o el trigger de cupo
+            # de app/db_constraints.py: alguien ocupó ese lugar justo
+            # ahora. NO es falta de saldo - contarlo como tal (lo que
+            # hacía antes) le mostraba al admin un mensaje que lo
+            # mandaba a cargarle clases al alumno para arreglar algo
+            # que no se arregla con eso.
+            saltadas_por_cupo += 1
             continue
         reservadas += 1
 
@@ -306,7 +320,7 @@ def asignar_horario_fijo(usuario, horario):
             enviar_aviso_ultima_clase(usuario)
 
     db.session.commit()
-    return inscripcion, reservadas, saltadas_por_saldo
+    return inscripcion, reservadas, saltadas_por_saldo, saltadas_por_cupo
 
 
 def quitar_horario_fijo(inscripcion):
@@ -315,8 +329,17 @@ def quitar_horario_fijo(inscripcion):
     esa asignación fija se cancelan (sin acreditar clase de
     recuperación: fue una decisión del admin, no una cancelación del
     alumno con anticipación).
+
+    "Futuras" es por HORARIO, no por día: el filtro por fecha (>= hoy)
+    solo sirve para no traer de la base todo el historial, pero después
+    hay que descartar a mano las clases de HOY que ya empezaron. Sin
+    ese segundo filtro, quitarle el horario fijo a un alumno a la tarde
+    le cancelaba retroactivamente la clase a la que ya había ido esa
+    misma mañana - le desaparecía del historial una clase que sí tomó
+    (y que ya le había descontado saldo).
     """
     hoy = hoy_estudio()
+    ahora = ahora_estudio()
     reservas_futuras = (
         Reserva.query.join(Clase)
         .filter(
@@ -328,8 +351,10 @@ def quitar_horario_fijo(inscripcion):
         .all()
     )
     for reserva in reservas_futuras:
+        if datetime.combine(reserva.clase.fecha, reserva.clase.hora_inicio) <= ahora:
+            continue
         reserva.estado = "cancelada"
-        reserva.fecha_cancelacion = ahora_estudio()
+        reserva.fecha_cancelacion = ahora
 
     db.session.delete(inscripcion)
     db.session.commit()
@@ -404,6 +429,10 @@ def cancelar_clase(clase):
             reservas_canceladas.append(reserva)
 
     clase.cancelada = True
+    # Guardamos CUÁNDO se canceló: es lo que después le permite a
+    # reactivar_clase saber qué reservas canceló esta acción y cuáles
+    # ya estaban canceladas de antes por decisión del propio alumno.
+    clase.fecha_cancelada = ahora
     db.session.commit()
     return reservas_canceladas
 
@@ -448,25 +477,35 @@ def reactivar_clase(clase):
     volver a asignar a mano), en vez de asumir que todos siguen
     queriendo/pudiendo ir después de un tiempo indeterminado.
 
-    Solo se intenta recuperar el crédito de Reservas con
-    cancelacion_a_tiempo=True: es la marca que deja
-    _cancelar_reserva_y_acreditar (usada por cancelar_clase) en toda
-    reserva a la que efectivamente le acreditó un crédito. Si un
-    alumno había cancelado su propio turno tarde (sin acreditar nada)
-    ANTES de que el admin cancelara toda la clase, esa Reserva queda
-    con cancelacion_a_tiempo=False y no se toca acá - si la
-    incluyéramos, podríamos terminar restándole a ese alumno un
-    crédito de recuperación real que tenía guardado de otra cancelación
-    sin relación con esta clase.
+    A qué reservas se les toca el crédito: SOLO a las que canceló esta
+    cancelación de clase puntual, identificadas por haberse cancelado
+    en el mismo instante que la clase (Clase.fecha_cancelada, que graba
+    cancelar_clase). No alcanza con filtrar por cancelacion_a_tiempo:
+    un alumno que había cancelado su PROPIO turno con anticipación
+    ANTES de que el admin cancelara la clase entera también queda con
+    estado="cancelada" y cancelacion_a_tiempo=True, y ese crédito se lo
+    ganó él por avisar a tiempo - nada que ver con esta cancelación.
+    Incluirlo (como pasaba antes) le sacaba un crédito real que tenía
+    bien ganado, sin que nadie se enterara.
 
     Devuelve cuántos créditos se pudieron recuperar efectivamente.
     """
     if not clase.cancelada:
         return 0
 
+    # Sin fecha_cancelada no hay forma de distinguir qué reservas
+    # canceló el estudio (pasa con clases canceladas ANTES de que
+    # existiera esa columna). En ese caso preferimos no tocarle el
+    # saldo a nadie: dejarle un crédito de más a un alumno es mucho
+    # menos grave que sacarle uno que se ganó.
+    if clase.fecha_cancelada is None:
+        clase.cancelada = False
+        db.session.commit()
+        return 0
+
     reservas_canceladas = Reserva.query.filter_by(
         clase_id=clase.id, estado="cancelada", cancelacion_a_tiempo=True
-    ).all()
+    ).filter(Reserva.fecha_cancelacion >= clase.fecha_cancelada).all()
     tabla_usuario = Usuario.__table__
     recuperados = 0
     for reserva in reservas_canceladas:
@@ -479,5 +518,6 @@ def reactivar_clase(clase):
             recuperados += 1
 
     clase.cancelada = False
+    clase.fecha_cancelada = None
     db.session.commit()
     return recuperados

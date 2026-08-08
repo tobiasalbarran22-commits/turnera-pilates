@@ -15,6 +15,7 @@ from app import create_app
 from app.extensions import db
 from app.models import Plan
 from app.db_constraints import crear_restricciones_concurrencia
+from app.db_migrations import aplicar_migraciones_pendientes
 
 app = create_app()
 
@@ -28,38 +29,18 @@ PLANES_ESPERADOS = [
     ("16 clases por mes", 16),
 ]
 
-# (tabla, columna, definición SQL) de las columnas nuevas que agregamos
-# a tablas que ya existían.
-COLUMNAS_NUEVAS = [
-    ("usuarios", "modalidad", "VARCHAR(20) DEFAULT 'libre'"),
-    ("reservas", "recordatorio_enviado", "BOOLEAN DEFAULT 0"),
-]
-
-
-def _agregar_columna_si_falta(conexion, tabla, columna, definicion_sql):
-    columnas_existentes = [fila[1] for fila in conexion.execute(f"PRAGMA table_info({tabla})").fetchall()]
-    if columna not in columnas_existentes:
-        conexion.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {definicion_sql}")
-        print(f"  + columna {tabla}.{columna} agregada")
-    else:
-        print(f"  · columna {tabla}.{columna} ya existía")
-
-
 with app.app_context():
     # 1) Tablas nuevas (inscripciones_fijas, avisos_cupo): create_all()
     # solo crea las tablas que faltan, no toca las que ya existen.
     db.create_all()
     print("Tablas nuevas verificadas/creadas.")
 
-    # 2) Columnas nuevas en tablas ya existentes. SQLite no soporta
-    # "ADD COLUMN IF NOT EXISTS", así que lo chequeamos a mano.
-    conexion = db.engine.raw_connection()
-    try:
-        for tabla, columna, definicion in COLUMNAS_NUEVAS:
-            _agregar_columna_si_falta(conexion, tabla, columna, definicion)
-        conexion.commit()
-    finally:
-        conexion.close()
+    # 2) Columnas nuevas en tablas ya existentes. La lista y la lógica
+    # viven en app/db_migrations.py (no acá) porque seed.py -el que
+    # corre Render en cada arranque- necesita aplicar exactamente lo
+    # mismo; si esto viviera solo en este script, una columna nueva
+    # nunca llegaría a producción.
+    aplicar_migraciones_pendientes(db.engine, verboso=True)
 
     # 3) Planes: nos aseguramos de que existan exactamente estos 4, sin
     # borrar ni recrear los que ya estén en uso por algún alumno (los

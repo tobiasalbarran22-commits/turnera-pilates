@@ -23,6 +23,26 @@ from flask_login import current_user
 from app.public import bp
 from app.extensions import csrf
 
+
+def url_absoluta(endpoint, **valores):
+    """
+    URL completa (con https://dominio) de una página del sitio.
+
+    Por qué no alcanza con url_for(..., _external=True): eso arma la
+    URL con el dominio POR EL QUE ENTRÓ la visita. Si el sitio se puede
+    abrir por dos dominios (el .onrender.com y el propio), el canonical
+    y el sitemap terminarían diciendo cosas distintas según quién los
+    pida - justo lo contrario de lo que un canonical tiene que hacer,
+    que es señalar UNA dirección fija. Con SITIO_URL configurado (ver
+    config.py) todas las URLs absolutas apuntan siempre ahí. Si no está
+    configurado, se comporta como antes.
+    """
+    ruta = url_for(endpoint, **valores)
+    sitio_url = current_app.config.get("SITIO_URL")
+    if sitio_url:
+        return sitio_url + ruta
+    return url_for(endpoint, _external=True, **valores)
+
 # Cada página pública que exista suma una entrada acá: el sitemap.xml
 # se arma solo recorriendo esta lista (ver sitemap_xml más abajo).
 PAGINAS_PUBLICAS = [
@@ -31,7 +51,44 @@ PAGINAS_PUBLICAS = [
     # antipatrón de SEO, Google desconfía de un sitemap donde todo dice
     # "recién cambiado" siempre). Se actualiza a mano cuando cambie
     # algo de la landing.
-    {"endpoint": "public.index", "changefreq": "monthly", "priority": "1.0", "lastmod": "2026-08-06"},
+    {"endpoint": "public.index", "changefreq": "monthly", "priority": "1.0", "lastmod": "2026-08-07"},
+]
+
+# Barrios desde los que viene (o puede venir) gente al estudio. Una
+# sola lista que alimenta TRES cosas a la vez:
+#   1. La sección "Zonas" visible en la página.
+#   2. El areaServed del JSON-LD.
+#   3. Nada más - y eso es a propósito.
+#
+# Por qué la sección visible importa: hasta ahora los barrios linderos
+# existían SOLO adentro del JSON-LD. Google usa los datos
+# estructurados para entender e ilustrar una página, pero lo que
+# rankea es el CONTENIDO que la persona ve. Una búsqueda como "pilates
+# villa del parque" difícilmente encuentre una página donde esas tres
+# palabras juntas no aparecen escritas en ningún lado del texto.
+#
+# "cerca" separa el barrio donde está el estudio de los de alrededor,
+# para poder redactar la sección sin decir que estamos en un barrio
+# donde no estamos (eso sería falso, y además Google penaliza las
+# páginas que fingen tener sede en cada barrio que nombran).
+BARRIOS = [
+    {"nombre": "Villa Santa Rita", "cerca": False,
+     "detalle": "Acá está el estudio, sobre Campana al 1400."},
+    {"nombre": "Villa del Parque", "cerca": True,
+     "detalle": "Barrio lindero: se llega en pocos minutos cruzando avenida San Martín."},
+    {"nombre": "Monte Castro", "cerca": True,
+     "detalle": "A pocas cuadras, del otro lado de avenida Álvarez Jonte."},
+    {"nombre": "Villa General Mitre", "cerca": True,
+     "detalle": "Lindero por el este, a minutos caminando."},
+    {"nombre": "Floresta", "cerca": True,
+     "detalle": "Cruzando avenida Gaona, hacia el sur."},
+    # La lista se mantiene corta a propósito: solo barrios linderos o a
+    # minutos reales. Estirarla con medio mapa de la ciudad ("pilates
+    # en Caballito", "en Devoto"...) para captar más búsquedas es
+    # justamente lo que Google detecta como contenido inflado, y
+    # termina restando en vez de sumar.
+    {"nombre": "La Paternal", "cerca": True,
+     "detalle": "Cerca por avenida San Martín, unos minutos en colectivo."},
 ]
 
 # El equipo del estudio: una sola fuente de verdad que alimenta tanto
@@ -88,7 +145,31 @@ PREGUNTAS_FRECUENTES = [
     },
     {
         "pregunta": "¿Dónde queda el estudio?",
-        "respuesta": "En Campana 1495, Villa Santa Rita, Ciudad Autónoma de Buenos Aires.",
+        "respuesta": "En Campana 1495, Villa Santa Rita, Ciudad Autónoma de Buenos Aires. Es a pocas cuadras "
+                     "de Villa del Parque, Monte Castro, Villa General Mitre y La Paternal.",
+    },
+    # Esta pregunta y la siguiente no son relleno: son literalmente las
+    # dos búsquedas por las que queremos que aparezca la página
+    # ("pilates villa santa rita", "pilates villa del parque"),
+    # respondidas de verdad. Google le da mucho peso a que la página
+    # conteste la pregunta que la persona escribió en el buscador, y de
+    # paso son cosas que alguien del barrio efectivamente se pregunta.
+    {
+        "pregunta": "¿Hacen pilates reformer en Villa Santa Rita?",
+        "respuesta": "Sí. El estudio está en Villa Santa Rita, sobre Campana al 1400, y todas las clases son "
+                     "de pilates reformer en grupos de hasta 5 personas.",
+    },
+    {
+        "pregunta": "Vivo en Villa del Parque, ¿me queda cerca?",
+        "respuesta": "Sí. Villa del Parque es barrio lindero a Villa Santa Rita: se llega en pocos minutos "
+                     "cruzando avenida San Martín. Varias de nuestras alumnas vienen de ahí, y también de "
+                     "Monte Castro, Villa General Mitre, Floresta y La Paternal.",
+    },
+    {
+        "pregunta": "¿Qué es el pilates reformer y en qué se diferencia del pilates en el piso?",
+        "respuesta": "El reformer es una camilla con una plataforma deslizante y resortes que acompañan o "
+                     "resisten el movimiento. Eso permite trabajar con menos impacto en las articulaciones "
+                     "que el pilates de suelo, y graduar la dificultad de cada ejercicio persona por persona.",
     },
     {
         "pregunta": "¿Cómo reservo una clase?",
@@ -115,43 +196,77 @@ def _schema_negocio():
     en la sección "Reseñas" de la página (ver RESENAS arriba) - nunca
     un número inflado que no se pueda verificar mirando la página.
     """
-    return {
+    url_home = url_absoluta("public.index")
+    direccion = current_app.config["DIRECCION_ESTUDIO"]
+
+    schema = {
         "@context": "https://schema.org",
         "@type": "ExerciseGym",
+        # @id: un identificador estable del negocio. Sirve para que
+        # Google entienda que este bloque, el de la FAQ y cualquier
+        # otro que se agregue después hablan de la MISMA entidad, en
+        # vez de tratarlos como cosas sueltas.
+        "@id": url_home + "#estudio",
         "name": "Benincasa Pilates",
-        "image": url_for("static", filename="img/estudio-interior.jpg", _external=True),
-        "url": url_for("public.index", _external=True),
+        "alternateName": "Pilates Benincasa",
+        "description": (
+            "Estudio de pilates reformer en Villa Santa Rita, CABA, con clases en grupos de hasta 5 personas "
+            "y seguimiento personalizado. A pocas cuadras de Villa del Parque, Monte Castro, "
+            "Villa General Mitre y La Paternal."
+        ),
+        "image": url_absoluta("static", filename="img/estudio-interior.jpg"),
+        "logo": url_absoluta("static", filename="img/favicon.svg"),
+        "url": url_home,
         "telephone": f"+{current_app.config['WHATSAPP_NUMERO']}",
         "priceRange": "$$",
+        "currenciesAccepted": "ARS",
+        "knowsLanguage": "es-AR",
         "address": {
             "@type": "PostalAddress",
             "streetAddress": "Campana 1495",
             "addressLocality": "Villa Santa Rita, Ciudad Autónoma de Buenos Aires",
             "addressRegion": "CABA",
+            "postalCode": "C1416",
             "addressCountry": "AR",
         },
-        # areaServed: además del barrio exacto, sumamos los barrios
-        # linderos para las búsquedas de gente cercana que busca
-        # "pilates" + su propio barrio. Esto lo lee Google (le dice
-        # "el negocio también atiende esta zona"), pero no se muestra
-        # como texto en la página - es la forma correcta de sumar
-        # cobertura geográfica sin tener que escribirlo en el body.
+        # hasMap: el link al lugar en Google Maps. Es una de las señales
+        # que Google cruza para asociar esta página con la ficha del
+        # negocio en Maps (que es lo que decide el "local pack", el
+        # mapita con 3 negocios que sale arriba de todo).
+        "hasMap": f"https://www.google.com/maps/search/?api=1&query={quote(f'Benincasa Pilates, {direccion}')}",
+        # areaServed: los barrios de alrededor. Le dice a Google "el
+        # negocio también atiende esta zona". OJO: esto SOLO no alcanza
+        # para rankear en "pilates villa del parque" - por eso los
+        # mismos barrios ahora también están escritos como texto
+        # visible en la página (ver BARRIOS y secciones/zonas.html).
         "areaServed": [
-            {"@type": "Place", "name": "Villa Santa Rita, CABA"},
-            {"@type": "Place", "name": "Monte Castro, CABA"},
-            {"@type": "Place", "name": "Villa del Parque, CABA"},
-            {"@type": "Place", "name": "Paternal, CABA"},
-            {"@type": "Place", "name": "Floresta, CABA"},
+            {"@type": "Place", "name": f"{b['nombre']}, Ciudad Autónoma de Buenos Aires"}
+            for b in BARRIOS
         ],
         "sameAs": [current_app.config["INSTAGRAM_URL"]],
         "employee": [
             {"@type": "Person", "name": p["nombre"], "jobTitle": p["rol"]}
             for p in EQUIPO
         ],
+        # makesOffer: qué vende el negocio, en los términos que la gente
+        # busca. Es otra forma (legítima, no relleno) de que "pilates
+        # reformer" quede asociado a esta entidad.
+        "makesOffer": [
+            {
+                "@type": "Offer",
+                "itemOffered": {
+                    "@type": "Service",
+                    "name": "Clases de pilates reformer en grupo reducido",
+                    "description": "Clases de pilates reformer de 60 minutos en grupos de hasta 5 personas.",
+                    "areaServed": {"@type": "Place", "name": "Villa Santa Rita, Ciudad Autónoma de Buenos Aires"},
+                },
+            }
+        ],
         "aggregateRating": {
             "@type": "AggregateRating",
             "ratingValue": CALIFICACION_PROMEDIO,
             "reviewCount": len(RESENAS),
+            "bestRating": "5",
         },
         "review": [
             {
@@ -164,12 +279,65 @@ def _schema_negocio():
         ],
     }
 
+    # Coordenadas exactas: se incluyen SOLO si están cargadas (ver
+    # ESTUDIO_LATITUD/ESTUDIO_LONGITUD en config.py). Es de los datos
+    # que más pesan para aparecer en el mapita de "pilates cerca mío",
+    # pero unas coordenadas inventadas son peores que ninguna, así que
+    # no ponemos un valor por defecto.
+    latitud = current_app.config.get("ESTUDIO_LATITUD")
+    longitud = current_app.config.get("ESTUDIO_LONGITUD")
+    if latitud and longitud:
+        schema["geo"] = {
+            "@type": "GeoCoordinates",
+            "latitude": float(latitud),
+            "longitude": float(longitud),
+        }
+
+    horarios = _horarios_de_atencion_schema()
+    if horarios:
+        schema["openingHoursSpecification"] = horarios
+
+    return schema
+
+
+def _horarios_de_atencion_schema():
+    """
+    Traduce la variable HORARIOS_ATENCION (ver config.py) al formato
+    que espera schema.org. Formato de entrada:
+        "Monday,Tuesday 08:00-21:00|Saturday 09:00-13:00"
+
+    Si está vacía o mal escrita, devuelve None y el bloque
+    simplemente no se incluye: preferimos no declarar horarios antes
+    que declarar horarios equivocados (que Google puede llegar a
+    mostrar como "Abierto ahora" cuando el estudio está cerrado).
+    """
+    crudo = (current_app.config.get("HORARIOS_ATENCION") or "").strip()
+    if not crudo:
+        return None
+
+    especificaciones = []
+    for tramo in crudo.split("|"):
+        partes = tramo.strip().split()
+        if len(partes) != 2 or "-" not in partes[1]:
+            current_app.logger.warning(f"HORARIOS_ATENCION: no se entiende el tramo '{tramo}', se ignora.")
+            continue
+        dias, rango = partes
+        apertura, cierre = rango.split("-", 1)
+        especificaciones.append({
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [d.strip() for d in dias.split(",") if d.strip()],
+            "opens": apertura,
+            "closes": cierre,
+        })
+    return especificaciones or None
+
 
 def _schema_faq():
     """FAQPage: le da a Google la chance de mostrar estas preguntas como resultado enriquecido."""
     return {
         "@context": "https://schema.org",
         "@type": "FAQPage",
+        "@id": url_absoluta("public.index") + "#preguntas",
         "mainEntity": [
             {
                 "@type": "Question",
@@ -200,7 +368,15 @@ def _contexto_estudio():
         "direccion": direccion,
         "mapa_embed_url": f"https://www.google.com/maps?q={consulta_mapa}&output=embed",
         "mapa_url": f"https://www.google.com/maps/search/?api=1&query={consulta_mapa}",
-        "og_image_url": url_for("static", filename="img/estudio-interior.jpg", _external=True),
+        # Imagen de previsualización al compartir el link (WhatsApp,
+        # Instagram, Facebook, Google). Es un archivo aparte, recortado
+        # a 1200x630: la foto del estudio es vertical (960x1280) y en
+        # una tarjeta de link horizontal se recortaba sola, cortando
+        # justo la parte de arriba y abajo. Además el <head> declaraba
+        # 1200x900, que no era el tamaño de ninguna de las dos - y una
+        # medida declarada que no coincide hace que algunas apps
+        # descarten la imagen y muestren el link pelado.
+        "og_image_url": url_absoluta("static", filename="img/og-benincasa-pilates.jpg"),
     }
 
 
@@ -213,11 +389,12 @@ def index():
 
     return render_template(
         "public/landing.html",
-        canonical_url=url_for("public.index", _external=True),
+        canonical_url=url_absoluta("public.index"),
         equipo=EQUIPO,
         resenas=RESENAS,
         calificacion_promedio=CALIFICACION_PROMEDIO,
         preguntas=PREGUNTAS_FRECUENTES,
+        barrios=BARRIOS,
         datos_estructurados=[_schema_negocio(), _schema_faq()],
         **_contexto_estudio(),
     )
@@ -234,7 +411,11 @@ def robots_txt():
         "Disallow: /cambiar-password\n"
         "Disallow: /redirigir\n"
         "Disallow: /logout\n"
-        f"\nSitemap: {url_for('public.sitemap_xml', _external=True)}\n"
+        # La ruta de la tarea programada: no es una página, no tiene
+        # nada que indexar, y no hace falta anunciarle a nadie que
+        # existe.
+        "Disallow: /tareas/\n"
+        f"\nSitemap: {url_absoluta('public.sitemap_xml')}\n"
     )
     return Response(contenido, mimetype="text/plain")
 
@@ -245,7 +426,7 @@ def sitemap_xml():
     for pagina in PAGINAS_PUBLICAS:
         filas.append(
             "  <url>\n"
-            f"    <loc>{url_for(pagina['endpoint'], _external=True)}</loc>\n"
+            f"    <loc>{url_absoluta(pagina['endpoint'])}</loc>\n"
             f"    <lastmod>{pagina['lastmod']}</lastmod>\n"
             f"    <changefreq>{pagina['changefreq']}</changefreq>\n"
             f"    <priority>{pagina['priority']}</priority>\n"

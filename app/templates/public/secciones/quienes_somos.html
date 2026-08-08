@@ -1,7 +1,7 @@
 <section class="landing-seccion papel" id="quienes-somos">
     <div class="envoltura">
         <div class="cabecera reveal">
-            <h2>Quiénes somos</h2>
+            <h2>Quiénes somos: un estudio de pilates reformer en el barrio</h2>
         </div>
         <div class="landing-texto reveal">
             <p>En Benincasa Pilates creemos que el pilates mejora la calidad de vida: un espacio para fortalecerte, cuidar tu cuerpo y dedicarte un momento a vos.</p>
@@ -9,8 +9,17 @@
             <p>Más que un estudio, somos un lugar donde el bienestar, la atención personalizada y el acompañamiento están en cada clase.</p>
         </div>
         <p class="landing-badge reveal">Damos clases para todos los niveles — desde quienes recién empiezan hasta quienes ya tienen experiencia.</p>
+        {# width/height con las medidas REALES del archivo (960x1280).
+           No fijan el tamaño en pantalla (el CSS sigue mandando), le
+           dan al navegador la proporción para reservar el espacio
+           antes de que la foto cargue. Sin eso, el texto de abajo
+           salta cuando la imagen aparece: eso es el CLS de Core Web
+           Vitals, que Google mide y usa como señal de ranking. #}
         <figure class="landing-foto reveal">
-            <img src="{{ url_for('static', filename='img/estudio-interior.jpg') }}" alt="Sala de Benincasa Pilates con camillas reformer de madera junto a ventanas con luz natural" loading="lazy" decoding="async">
+            <img src="{{ url_for('static', filename='img/estudio-interior.jpg') }}"
+                 width="960" height="1280"
+                 alt="Sala del estudio de pilates Benincasa en Villa Santa Rita, con camillas reformer de madera junto a ventanas con luz natural"
+                 loading="lazy" decoding="async">
         </figure>
     </div>
 </section>

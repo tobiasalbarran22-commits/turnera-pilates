@@ -1,9 +1,14 @@
 <section class="landing-seccion claro" id="ubicacion">
     <div class="envoltura">
         <div class="cabecera reveal">
+            {# El h2 lleva la dirección y el barrio, no un "Visitanos"
+               genérico: los subtítulos son de las señales que Google
+               usa para entender de qué habla cada parte de la página,
+               y "Campana 1495, Villa Santa Rita" es justo el dato que
+               busca alguien que quiere un pilates cerca de su casa. #}
             <span class="eyebrow">Dónde estamos</span>
-            <h2>Visitanos</h2>
-            <p>{{ direccion }}</p>
+            <h2>Visitanos en Campana 1495, Villa Santa Rita</h2>
+            <p>{{ direccion }} — a minutos de Villa del Parque, Monte Castro y Villa General Mitre.</p>
         </div>
         <div class="landing-mapa reveal">
             <iframe

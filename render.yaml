@@ -39,6 +39,29 @@ services:
       # sistema mande recordatorios de más.
       - key: TAREAS_SECRETO
         sync: false
+      # --- SEO ---
+      # SITIO_URL: la dirección definitiva del sitio, sin barra final.
+      # Mientras no haya dominio propio, dejarla VACÍA (la app arma las
+      # URLs con el dominio por el que entró la visita, como siempre).
+      # Apenas se compre el dominio, cargar acá el valor final (ej.
+      # https://www.benincasapilates.com.ar): desde ese momento el
+      # canonical, el sitemap y las previsualizaciones apuntan siempre
+      # ahí, y el .onrender.com redirige con 301 en vez de competir
+      # contra el dominio propio en Google.
+      - key: SITIO_URL
+        sync: false
+      # Coordenadas exactas del estudio (Google Maps > click derecho
+      # sobre el punto > copia "lat, long"). Pesan bastante para
+      # aparecer en el mapa de "pilates cerca mío". Si quedan vacías,
+      # el bloque simplemente no se publica - nunca se inventan.
+      - key: ESTUDIO_LATITUD
+        sync: false
+      - key: ESTUDIO_LONGITUD
+        sync: false
+      # Horarios de atención reales. Formato:
+      #   Monday,Tuesday,Wednesday,Thursday,Friday 08:00-21:00|Saturday 09:00-13:00
+      - key: HORARIOS_ATENCION
+        sync: false
 
   # Dispara una vez por día el recordatorio "mañana tenés clase" (ver
   # app/public/routes.py: tarea_recordatorios). Antes esto lo hacía

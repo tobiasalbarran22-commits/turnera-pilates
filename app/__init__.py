@@ -8,7 +8,9 @@ Flask como una variable global, la creamos DENTRO de una función
 """
 
 import os
-from flask import Flask
+from urllib.parse import urlparse
+
+from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import config_por_nombre, SECRET_KEY_DEV_DEFAULT
@@ -90,6 +92,29 @@ def create_app(config_name=None):
     # ver app/public/routes.py para cómo agregar una nueva.
     app.register_blueprint(public_bp)
 
+    @app.before_request
+    def _redirigir_al_dominio_canonico():
+        # Un mismo sitio accesible por dos dominios (el .onrender.com y
+        # el propio, o con y sin "www") es contenido duplicado para
+        # Google: en vez de sumar, parte la autoridad en dos y ninguna
+        # de las dos versiones rankea tan bien como rankearía una sola.
+        # Si SITIO_URL está configurado (ver config.py), mandamos todo
+        # el tráfico al dominio elegido con un 301 permanente, que es
+        # la señal que Google entiende como "esta es LA dirección".
+        #
+        # Solo para GET/HEAD: redirigir un POST con 301 haría que el
+        # navegador reenvíe el pedido sin el cuerpo y se pierdan datos
+        # de un formulario. Y nunca para la tarea programada, que la
+        # llama un curl que no sigue redirecciones.
+        from flask import request, redirect as _redirect
+        sitio_url = app.config.get("SITIO_URL")
+        if not sitio_url or request.method not in ("GET", "HEAD"):
+            return None
+        host_canonico = urlparse(sitio_url).netloc
+        if not host_canonico or request.host == host_canonico:
+            return None
+        return _redirect(sitio_url + request.full_path.rstrip("?"), code=301)
+
     @app.after_request
     def _sin_cache_en_paginas_dinamicas(response):
         # El calendario, "mis turnos", etc. cambian todo el tiempo
@@ -111,6 +136,15 @@ def create_app(config_name=None):
         from flask import request
         if request.blueprint in ("admin", "alumno", "auth"):
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            # Refuerzo del <meta name="robots"> de templates/base.html:
+            # el header vale aunque el buscador no llegue a parsear el
+            # HTML (ej. una respuesta de redirección al login, o un
+            # PDF/JSON servido desde acá el día de mañana). robots.txt
+            # pide no RASTREAR estas rutas; esto además prohíbe
+            # INDEXARLAS, que son dos cosas distintas: una URL que
+            # robots.txt bloquea puede igual aparecer en resultados si
+            # alguien la enlaza desde afuera.
+            response.headers["X-Robots-Tag"] = "noindex, nofollow"
         return response
 
     @app.after_request
@@ -133,5 +167,42 @@ def create_app(config_name=None):
         if request.is_secure:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
+
+    # Páginas de error propias. Además de verse mucho mejor que la
+    # pantalla blanca por defecto de Flask, importan para SEO: si
+    # Google entra a una URL que no existe (un link viejo, un typo de
+    # alguien que compartió la dirección) tiene que recibir un 404 con
+    # una página que se entienda, no un error crudo. Todas llevan
+    # noindex por el template, y devuelven el código HTTP correcto -
+    # que es lo que Google realmente lee para saber si sacar esa URL
+    # de su índice.
+    @app.errorhandler(400)
+    def _error_400(e):
+        return render_template("errores/error.html", codigo=400,
+                               titulo="Pedido inválido",
+                               detalle="Algo del formulario que mandaste no se entendió. Probá de nuevo."), 400
+
+    @app.errorhandler(403)
+    def _error_403(e):
+        return render_template("errores/error.html", codigo=403,
+                               titulo="No tenés permiso para ver esto",
+                               detalle="Esta parte del sistema es solo para el estudio."), 403
+
+    @app.errorhandler(404)
+    def _error_404(e):
+        return render_template("errores/error.html", codigo=404,
+                               titulo="No encontramos esta página",
+                               detalle="Puede que el link esté viejo o mal escrito."), 404
+
+    @app.errorhandler(500)
+    def _error_500(e):
+        # Un 500 casi siempre deja la sesión de base de datos en un
+        # estado inservible (una transacción a medio hacer). Sin este
+        # rollback, los requests siguientes de ese mismo worker pueden
+        # fallar en cadena por un error que ya pasó.
+        db.session.rollback()
+        return render_template("errores/error.html", codigo=500,
+                               titulo="Se nos rompió algo",
+                               detalle="Ya quedó registrado. Probá de nuevo en un rato."), 500
 
     return app

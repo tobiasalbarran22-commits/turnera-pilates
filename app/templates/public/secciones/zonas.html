@@ -1,0 +1,50 @@
+{# Sección "Zonas": la pieza que faltaba para aparecer en búsquedas
+   del tipo "pilates villa del parque".
+
+   Por qué existe: los barrios linderos ya estaban declarados en el
+   JSON-LD (areaServed), pero eso es un dato que Google lee para
+   ENTENDER la página, no contenido por el que la página compita. Una
+   búsqueda de "pilates villa del parque" difícilmente devuelva una
+   página donde esas palabras no aparecen escritas en ningún lado del
+   texto visible. Acá aparecen, con contenido real (cómo se llega
+   desde cada barrio), no como una lista de palabras sueltas.
+
+   OJO con lo que NO hay que hacer acá: multiplicar esta página en una
+   por barrio ("pilates en villa del parque", "pilates en monte
+   castro"...) cambiando solo el nombre. Google llama a eso "doorway
+   pages" y las penaliza explícitamente. Una sola página honesta, que
+   dice dónde está el estudio y desde qué barrios se llega fácil,
+   rankea mejor y no se arriesga a nada.
+
+   El dato de dónde ESTÁ el estudio y de qué barrios están CERCA sale
+   de BARRIOS en app/public/routes.py, la misma lista que alimenta el
+   areaServed - así nunca se desincronizan. #}
+<section class="landing-seccion papel" id="zonas">
+    <div class="envoltura">
+        <div class="cabecera reveal">
+            <span class="eyebrow">Zonas</span>
+            <h2>Pilates en Villa Santa Rita y barrios cercanos</h2>
+            <p>El estudio está en Campana 1495, Villa Santa Rita. Estos son los barrios desde los que llegan nuestras alumnas y alumnos, casi todos a pocos minutos.</p>
+        </div>
+        <ul class="landing-zonas">
+            {% for barrio in barrios %}
+            <li class="landing-zona reveal{% if not barrio.cerca %} es-sede{% endif %}" style="--delay:{{ loop.index0 * 0.06 }}s">
+                {# La etiqueta "Acá estamos" va FUERA del <h3>: es una
+                   marca visual, no parte del título. Adentro haría que
+                   el encabezado que lee Google (y un lector de
+                   pantalla) sea "Pilates en Villa Santa Rita Acá
+                   estamos", que no es una frase. #}
+                <div class="landing-zona-titulo">
+                    <h3>Pilates en {{ barrio.nombre }}</h3>
+                    {% if not barrio.cerca %}<span class="etiqueta">Acá estamos</span>{% endif %}
+                </div>
+                <p>{{ barrio.detalle }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+        <p class="landing-zonas-nota reveal">¿Venís de otro barrio? Escribinos y te contamos cómo llegar y qué horarios tenemos libres.</p>
+        <div class="fila-botones" style="justify-content:center; margin-top:1.5rem;">
+            <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="boton-cta boton-cta-secundario">Consultar por WhatsApp</a>
+        </div>
+    </div>
+</section>

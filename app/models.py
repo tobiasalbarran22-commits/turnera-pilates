@@ -217,6 +217,14 @@ class Clase(db.Model):
 
     cancelada = db.Column(db.Boolean, default=False)  # si el admin cancela la clase entera (ej: feriado)
 
+    # Momento exacto en que el admin canceló la clase entera. No es
+    # solo informativo: es lo que permite distinguir, si después la
+    # reactiva, cuáles reservas canceló ESA acción (y hay que
+    # devolverles el crédito) de las que el propio alumno ya había
+    # cancelado por su cuenta antes - ver reactivar_clase en
+    # app/admin/services.py. Vuelve a None al reactivar.
+    fecha_cancelada = db.Column(db.DateTime, nullable=True)
+
     reservas = db.relationship("Reserva", backref="clase", lazy="dynamic")
 
     @property

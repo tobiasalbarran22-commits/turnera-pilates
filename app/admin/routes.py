@@ -296,18 +296,31 @@ def usuario_horarios_fijos(usuario_id):
         abort(404)
 
     if request.method == "POST":
-        horario = Horario.query.get_or_404(int(request.form.get("horario_id", 0)))
+        # El horario_id llega de un <form>: si viene vacío o con algo
+        # que no es un número, int() explotaría con un 500 en vez de
+        # devolver un error normal.
+        try:
+            horario_id = int(request.form.get("horario_id", ""))
+        except (TypeError, ValueError):
+            abort(400)
+        horario = Horario.query.get_or_404(horario_id)
         accion = request.form.get("accion")
 
         if accion == "asignar":
             try:
-                _, reservadas, saltadas_por_saldo = asignar_horario_fijo(usuario, horario)
+                _, reservadas, saltadas_por_saldo, saltadas_por_cupo = asignar_horario_fijo(usuario, horario)
                 if saltadas_por_saldo > 0:
                     flash(
                         f"{usuario.nombre_completo} quedó asignada/o de forma fija a {horario}, pero no "
                         f"tenía saldo suficiente y se saltearon {saltadas_por_saldo} clase(s) ya generadas "
                         "(no le quedaron turnos reales para esas fechas). Cargale saldo (clases disponibles) "
                         "y volvé a asignarlo, o esperá a la próxima generación mensual.", "warning"
+                    )
+                elif saltadas_por_cupo > 0:
+                    flash(
+                        f"{usuario.nombre_completo} quedó asignada/o de forma fija a {horario}, pero "
+                        f"{saltadas_por_cupo} clase(s) de este mes ya estaban llenas y no se le pudo reservar "
+                        "el lugar ahí. Revisá esas fechas en Clases si querés hacerle lugar.", "warning"
                     )
                 else:
                     flash(f"{usuario.nombre_completo} quedó asignada/o de forma fija a {horario}.", "success")
@@ -416,9 +429,25 @@ def horario_eliminar(horario_id):
         flash("Este horario ya generó clases en el calendario: no se puede eliminar, pero podés desactivarlo.", "warning")
         return redirect(url_for("admin.horarios"))
 
+    # Antes de borrar el horario hay que borrar las InscripcionFija que
+    # lo apuntan. Si no, quedan filas huérfanas con un horario_id que ya
+    # no existe (SQLite no fuerza las claves foráneas por defecto), y la
+    # próxima vez que se lee inscripcion.horario eso da None: revienta
+    # con AttributeError tanto en admin/services.asignar_horario_fijo
+    # (i.horario.dia_semana) como en la pantalla de horarios fijos del
+    # alumno. No usamos quitar_horario_fijo() acá porque este horario
+    # todavía no generó ninguna clase: no hay reservas que cancelar.
+    inscripciones_borradas = InscripcionFija.query.filter_by(horario_id=horario.id).delete()
+
     db.session.delete(horario)
     db.session.commit()
-    flash("Horario eliminado.", "info")
+    if inscripciones_borradas:
+        flash(
+            f"Horario eliminado. También se quitó de los horarios fijos de {inscripciones_borradas} alumna/o "
+            "(no tenían turnos reservados: este horario nunca llegó a generar clases).", "info"
+        )
+    else:
+        flash("Horario eliminado.", "info")
     return redirect(url_for("admin.horarios"))
 
 
@@ -432,11 +461,26 @@ def generar_clases():
     varias veces sin problema: no duplica clases ya generadas.
     """
     hoy = hoy_estudio()
-    anio = int(request.form.get("anio", hoy.year))
-    mes = int(request.form.get("mes", hoy.month))
 
-    if mes < 1 or mes > 12:
+    # Estos dos valores llegan de un <form>. int() sobre algo vacío o
+    # no numérico tira un 500, y un año fuera de rango (0, 99999) hace
+    # explotar date(anio, mes, 1) más adentro, en generar_clases_para_mes.
+    # Los validamos acá, que es donde entran al sistema.
+    try:
+        anio = int(request.form.get("anio", hoy.year))
+        mes = int(request.form.get("mes", hoy.month))
+    except (TypeError, ValueError):
+        flash("Mes o año inválido.", "danger")
+        return redirect(url_for("admin.horarios"))
+
+    if not 1 <= mes <= 12:
         flash("Mes inválido.", "danger")
+        return redirect(url_for("admin.horarios"))
+
+    # Rango razonable: el año actual y hasta 5 hacia adelante. Generar
+    # clases de años pasados no sirve para nada y solo llena la base.
+    if not hoy.year <= anio <= hoy.year + 5:
+        flash(f"Año inválido: solo se pueden generar clases entre {hoy.year} y {hoy.year + 5}.", "danger")
         return redirect(url_for("admin.horarios"))
 
     creadas = generar_clases_para_mes(anio, mes)

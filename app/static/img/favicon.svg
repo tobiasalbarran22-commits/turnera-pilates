@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Favicon del estudio. Google lo muestra al lado de cada resultado de
+  búsqueda en celular: sin uno propio, el resultado sale con el globo
+  gris genérico y se ve como una página cualquiera al lado de la
+  competencia.
+
+  Por qué una "B" y no el isotipo de los dos arcos que usa la navbar
+  (ver templates/base.html): el favicon se ve a 16x16 píxeles reales.
+  A ese tamaño dos círculos superpuestos con líneas de 2px se
+  convierten en una mancha gris. Una letra maciza con mucho contraste
+  (crema sobre azul medianoche, los colores de la marca) se reconoce
+  igual de chica.
+
+  SVG y no .ico: un solo archivo que se ve nítido en cualquier tamaño,
+  y lo soportan todos los navegadores actuales.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Benincasa Pilates">
+  <rect width="64" height="64" rx="14" fill="#1B2233"/>
+  <path d="M22 16h13.2c6.1 0 9.9 3 9.9 7.9 0 3.2-1.7 5.6-4.6 6.8 3.7 1 5.9 3.7 5.9 7.4 0 5.4-4.1 8.6-10.9 8.6H22V16zm12.3 12.3c2.8 0 4.4-1.3 4.4-3.6s-1.6-3.6-4.4-3.6h-5.9v7.2h5.9zm.8 13.1c3 0 4.8-1.4 4.8-3.9s-1.8-3.9-4.8-3.9h-6.7v7.8h6.7z" fill="#FBF7EE"/>
+</svg>
